@@ -1,5 +1,5 @@
+import { EntityDB } from "./entity-db.js";
 import { pipeline, TextStreamer } from "https://cdn.jsdelivr.net/npm/@huggingface/transformers@3.7.6/dist/transformers.min.js";
-import { EntityDB } from "https://cdn.jsdelivr.net/npm/@babycommando/entity-db@latest/+esm";
 
 // DOM Elements
 const chatContainer = document.getElementById('chatContainer');
