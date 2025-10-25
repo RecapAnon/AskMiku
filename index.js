@@ -1,4 +1,4 @@
-import { pipeline, TextStreamer } from "https://cdn.jsdelivr.net/npm/@huggingface/transformers@3.1.2";
+import { pipeline, TextStreamer } from "https://cdn.jsdelivr.net/npm/@huggingface/transformers@3.7.6";
 
 // DOM Elements
 const chatContainer = document.getElementById('chatContainer');
