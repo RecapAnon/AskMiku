@@ -204,6 +204,7 @@ async function generateResponse(userMessage) {
                 relevantDocs.forEach((doc, index) => {
                     contextInfo += `${index + 1}. ${doc.text}\n`;
                 });
+                console.log(contextInfo);
             }
         }
 
