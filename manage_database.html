@@ -1,0 +1,481 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Database Management - Ask Miku</title>
+    <link rel="icon" type="image/svg+xml" href="favicon.svg">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            padding: 40px;
+            max-width: 600px;
+            width: 100%;
+        }
+
+        h1 {
+            color: #667eea;
+            margin-bottom: 10px;
+            font-size: 32px;
+            text-align: center;
+        }
+
+        .subtitle {
+            color: #666;
+            text-align: center;
+            margin-bottom: 40px;
+            font-size: 14px;
+        }
+
+        .section {
+            margin-bottom: 30px;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 10px;
+        }
+
+        .section h2 {
+            color: #333;
+            font-size: 18px;
+            margin-bottom: 10px;
+        }
+
+        .section p {
+            color: #666;
+            font-size: 14px;
+            line-height: 1.6;
+            margin-bottom: 15px;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        button {
+            flex: 1;
+            min-width: 150px;
+            padding: 12px 24px;
+            font-size: 16px;
+            font-weight: 600;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .btn-primary:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-secondary {
+            background: #6c757d;
+            color: white;
+        }
+
+        .btn-secondary:hover:not(:disabled) {
+            background: #5a6268;
+            transform: translateY(-2px);
+        }
+
+        .btn-danger {
+            background: #dc3545;
+            color: white;
+        }
+
+        .btn-danger:hover:not(:disabled) {
+            background: #c82333;
+            transform: translateY(-2px);
+        }
+
+        button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .file-input-wrapper {
+            position: relative;
+            overflow: hidden;
+            display: inline-block;
+            flex: 1;
+            min-width: 150px;
+        }
+
+        .file-input-wrapper input[type=file] {
+            position: absolute;
+            left: -9999px;
+        }
+
+        .status-message {
+            margin-top: 15px;
+            padding: 12px;
+            border-radius: 8px;
+            font-size: 14px;
+            display: none;
+        }
+
+        .status-message.show {
+            display: block;
+        }
+
+        .status-success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .status-error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        .status-info {
+            background: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+
+        .loading {
+            display: inline-block;
+            width: 16px;
+            height: 16px;
+            border: 2px solid #f3f3f3;
+            border-top: 2px solid #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .back-link {
+            text-align: center;
+            margin-top: 20px;
+        }
+
+        .back-link a {
+            color: #667eea;
+            text-decoration: none;
+            font-size: 14px;
+        }
+
+        .back-link a:hover {
+            text-decoration: underline;
+        }
+
+        .divider {
+            height: 1px;
+            background: #dee2e6;
+            margin: 30px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🗄️ Database Management</h1>
+        <p class="subtitle">Manage your Ask Miku knowledge base</p>
+
+        <!-- Import Section -->
+        <div class="section">
+            <h2>📥 Import Database</h2>
+            <p>Load database from a previously exported JSON file. This will populate the vector database with pre-calculated embeddings for instant startup.</p>
+            <div class="button-group">
+                <div class="file-input-wrapper">
+                    <button class="btn-primary" onclick="document.getElementById('importFile').click()">
+                        <span>📂 Choose File</span>
+                    </button>
+                    <input type="file" id="importFile" accept=".json" onchange="handleImport(this)">
+                </div>
+                <button class="btn-secondary" id="loadDummyBtn" onclick="loadDummyData()">
+                    <span>🔄 Load Dummy Data</span>
+                </button>
+            </div>
+            <div id="importStatus" class="status-message"></div>
+        </div>
+
+        <div class="divider"></div>
+
+        <!-- Export Section -->
+        <div class="section">
+            <h2>📤 Export Database</h2>
+            <p>Export the current database state to a JSON file. This includes all vector embeddings and metadata. Use this file for backup or to speed up future initializations.</p>
+            <div class="button-group">
+                <button class="btn-primary" id="exportBtn" onclick="handleExport()">
+                    <span>💾 Export to File</span>
+                </button>
+            </div>
+            <div id="exportStatus" class="status-message"></div>
+        </div>
+
+        <div class="divider"></div>
+
+        <!-- Clear Section -->
+        <div class="section">
+            <h2>🗑️ Clear Database</h2>
+            <p>Remove all data from the vector database. This action cannot be undone. You'll need to import or load dummy data again after clearing.</p>
+            <div class="button-group">
+                <button class="btn-danger" id="clearBtn" onclick="handleClear()">
+                    <span>⚠️ Clear All Data</span>
+                </button>
+            </div>
+            <div id="clearStatus" class="status-message"></div>
+        </div>
+
+        <div class="back-link">
+            <a href="index.html">← Back to Chat</a>
+        </div>
+    </div>
+
+    <script type="module">
+        import { EntityDB } from "./entity-db.js";
+        import * as IDBExportImport from "https://cdn.jsdelivr.net/npm/indexeddb-export-import@2.1.5/index.min.js";
+
+        let vectorDB = null;
+
+        // Initialize vector database
+        async function initializeVectorDB() {
+            try {
+                vectorDB = new EntityDB({
+                    vectorPath: "askmiku-memory",
+                    model: "Xenova/all-MiniLM-L6-v2"
+                });
+                console.log('EntityDB initialized successfully');
+                return true;
+            } catch (error) {
+                console.error('Error initializing EntityDB:', error);
+                showStatus('importStatus', 'Error initializing database: ' + error.message, 'error');
+                return false;
+            }
+        }
+
+        // Show status message
+        function showStatus(elementId, message, type) {
+            const statusEl = document.getElementById(elementId);
+            statusEl.textContent = message;
+            statusEl.className = `status-message show status-${type}`;
+            
+            if (type === 'success' || type === 'info') {
+                setTimeout(() => {
+                    statusEl.classList.remove('show');
+                }, 5000);
+            }
+        }
+
+        // Handle file import
+        window.handleImport = async function(input) {
+            if (!input.files || !input.files[0]) return;
+
+            const file = input.files[0];
+            const importBtn = input.closest('.file-input-wrapper').querySelector('button');
+            const originalText = importBtn.innerHTML;
+
+            try {
+                importBtn.disabled = true;
+                importBtn.innerHTML = '<span class="loading"></span> <span>Importing...</span>';
+                showStatus('importStatus', 'Reading file...', 'info');
+
+                // Initialize DB if needed
+                if (!vectorDB) {
+                    await initializeVectorDB();
+                }
+
+                // Read file content
+                const jsonString = await file.text();
+                
+                // Validate JSON
+                try {
+                    JSON.parse(jsonString);
+                } catch (e) {
+                    throw new Error('Invalid JSON file: ' + e.message);
+                }
+
+                showStatus('importStatus', 'Importing data to database...', 'info');
+
+                // Import to database
+                const nativeDB = await vectorDB.getNativeDB();
+                await new Promise((resolve, reject) => {
+                    IDBExportImport.importFromJsonString(nativeDB, jsonString, (err) => {
+                        if (err) reject(err);
+                        else resolve();
+                    });
+                });
+
+                showStatus('importStatus', `✓ Successfully imported database from ${file.name}`, 'success');
+            } catch (error) {
+                console.error('Import error:', error);
+                showStatus('importStatus', `✗ Import failed: ${error.message}`, 'error');
+            } finally {
+                importBtn.disabled = false;
+                importBtn.innerHTML = originalText;
+                input.value = ''; // Reset file input
+            }
+        };
+
+        // Load dummy data
+        window.loadDummyData = async function() {
+            const btn = document.getElementById('loadDummyBtn');
+            const originalText = btn.innerHTML;
+
+            try {
+                btn.disabled = true;
+                btn.innerHTML = '<span class="loading"></span> <span>Loading...</span>';
+                showStatus('importStatus', 'Loading dummy data from file...', 'info');
+
+                // Initialize DB if needed
+                if (!vectorDB) {
+                    await initializeVectorDB();
+                }
+
+                // Fetch dummy data
+                const response = await fetch('data/dummy.json');
+                if (!response.ok) {
+                    throw new Error(`Failed to load dummy.json: ${response.statusText}`);
+                }
+
+                const data = await response.json();
+                
+                if (!data.knowledgeBase || !Array.isArray(data.knowledgeBase)) {
+                    throw new Error('Invalid dummy.json format: missing knowledgeBase array');
+                }
+
+                showStatus('importStatus', `Inserting ${data.knowledgeBase.length} entries...`, 'info');
+
+                // Insert each entry
+                for (const entry of data.knowledgeBase) {
+                    await vectorDB.insert({
+                        text: entry.text,
+                        category: entry.category,
+                        topic: entry.topic
+                    });
+                }
+
+                showStatus('importStatus', `✓ Successfully loaded ${data.knowledgeBase.length} dummy entries`, 'success');
+            } catch (error) {
+                console.error('Load dummy data error:', error);
+                showStatus('importStatus', `✗ Failed to load dummy data: ${error.message}`, 'error');
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = originalText;
+            }
+        };
+
+        // Handle export
+        window.handleExport = async function() {
+            const btn = document.getElementById('exportBtn');
+            const originalText = btn.innerHTML;
+
+            try {
+                btn.disabled = true;
+                btn.innerHTML = '<span class="loading"></span> <span>Exporting...</span>';
+                showStatus('exportStatus', 'Exporting database...', 'info');
+
+                // Initialize DB if needed
+                if (!vectorDB) {
+                    await initializeVectorDB();
+                }
+
+                // Export database
+                const nativeDB = await vectorDB.getNativeDB();
+                const jsonString = await new Promise((resolve, reject) => {
+                    IDBExportImport.exportToJsonString(nativeDB, (err, data) => {
+                        if (err) reject(err);
+                        else resolve(data);
+                    });
+                });
+
+                // Create download
+                const blob = new Blob([jsonString], { type: 'application/json' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `askmiku-export-${new Date().toISOString().split('T')[0]}.json`;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+
+                showStatus('exportStatus', '✓ Database exported successfully', 'success');
+            } catch (error) {
+                console.error('Export error:', error);
+                showStatus('exportStatus', `✗ Export failed: ${error.message}`, 'error');
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = originalText;
+            }
+        };
+
+        // Handle clear
+        window.handleClear = async function() {
+            if (!confirm('Are you sure you want to clear all database data? This cannot be undone.')) {
+                return;
+            }
+
+            const btn = document.getElementById('clearBtn');
+            const originalText = btn.innerHTML;
+
+            try {
+                btn.disabled = true;
+                btn.innerHTML = '<span class="loading"></span> <span>Clearing...</span>';
+                showStatus('clearStatus', 'Clearing database...', 'info');
+
+                // Initialize DB if needed
+                if (!vectorDB) {
+                    await initializeVectorDB();
+                }
+
+                // Clear database
+                const nativeDB = await vectorDB.getNativeDB();
+                await new Promise((resolve, reject) => {
+                    IDBExportImport.clearDatabase(nativeDB, (err) => {
+                        if (err) reject(err);
+                        else resolve();
+                    });
+                });
+
+                showStatus('clearStatus', '✓ Database cleared successfully', 'success');
+            } catch (error) {
+                console.error('Clear error:', error);
+                showStatus('clearStatus', `✗ Clear failed: ${error.message}`, 'error');
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = originalText;
+            }
+        };
+
+        // Initialize on page load
+        initializeVectorDB();
+    </script>
+</body>
+</html>

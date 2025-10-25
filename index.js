@@ -17,9 +17,6 @@ let conversationHistory = [
 ];
 let isGenerating = false;
 
-// Hardcoded database export - will be imported if available
-const DB_EXPORT_DATA = null; // Will be populated after first export
-
 // Initialize the vector database
 async function initializeVectorDB() {
     try {
@@ -32,75 +29,64 @@ async function initializeVectorDB() {
 
         console.log('EntityDB initialized successfully');
 
-        // Check if we should import from hardcoded export
-        if (DB_EXPORT_DATA) {
-            console.log('Found hardcoded export data, importing...');
-            await importDatabaseFromString(DB_EXPORT_DATA);
-            console.log('Database imported from hardcoded export successfully');
+        // Try to load database.json if it exists
+        try {
+            console.log('Checking for database.json...');
+            const response = await fetch('data/database.json');
+            
+            if (response.ok) {
+                console.log('Found database.json, importing...');
+                const jsonString = await response.text();
+                await importDatabaseFromString(jsonString);
+                console.log('Database imported from database.json successfully');
+                return true; // Signal that we loaded from export
+            }
+        } catch (error) {
+            console.log('No database.json found or failed to load, will use dummy data');
         }
+        
+        return false; // Signal that we need to load dummy data
     } catch (error) {
         console.error('Error initializing EntityDB:', error);
         // Non-fatal - RAG features will be unavailable but chatbot still works
+        return false;
     }
 }
 
-// Populate database with dummy technical support data
+// Populate database with dummy technical support data from external file
 async function populateDummyData() {
     if (!vectorDB) return;
     
     try {
-        console.log('Populating database with dummy technical support data...');
+        console.log('Loading dummy data from data/dummy.json...');
         
-        const dummyData = [
-            {
-                text: "To reset your password, go to Settings > Security > Change Password. You'll need to verify your email address first.",
-                category: "password",
-                topic: "account_security"
-            },
-            {
-                text: "If your application is running slowly, try clearing the cache by going to Settings > Advanced > Clear Cache. This often resolves performance issues.",
-                category: "performance",
-                topic: "troubleshooting"
-            },
-            {
-                text: "To enable two-factor authentication, navigate to Settings > Security > Two-Factor Authentication and follow the setup wizard.",
-                category: "security",
-                topic: "account_security"
-            },
-            {
-                text: "Error code 404 means the requested resource was not found. Check the URL for typos or contact support if the problem persists.",
-                category: "errors",
-                topic: "troubleshooting"
-            },
-            {
-                text: "To export your data, go to Settings > Data & Privacy > Export Data. The export process may take several minutes depending on data size.",
-                category: "data",
-                topic: "data_management"
-            },
-            {
-                text: "Browser compatibility issues can often be resolved by updating to the latest version or trying a different browser like Chrome or Firefox.",
-                category: "compatibility",
-                topic: "troubleshooting"
-            },
-            {
-                text: "API rate limits are 1000 requests per hour for free tier and 10000 for premium. Upgrade your plan if you need higher limits.",
-                category: "api",
-                topic: "technical_limits"
-            },
-            {
-                text: "To integrate with third-party services, use the API key found in Settings > Developer > API Keys. Keep this key secret.",
-                category: "integration",
-                topic: "api_integration"
-            }
-        ];
+        // Fetch dummy data from external JSON file
+        const response = await fetch('data/dummy.json');
+        if (!response.ok) {
+            throw new Error(`Failed to load dummy.json: ${response.statusText}`);
+        }
 
-        for (const item of dummyData) {
-            await vectorDB.insert(item);
+        const data = await response.json();
+        
+        if (!data.knowledgeBase || !Array.isArray(data.knowledgeBase)) {
+            throw new Error('Invalid dummy.json format: missing knowledgeBase array');
+        }
+
+        console.log(`Populating database with ${data.knowledgeBase.length} entries...`);
+
+        // Insert each entry into the database with embeddings
+        for (const entry of data.knowledgeBase) {
+            await vectorDB.insert({
+                text: entry.text,
+                category: entry.category,
+                topic: entry.topic
+            });
         }
         
-        console.log(`Successfully inserted ${dummyData.length} knowledge base entries`);
+        console.log(`Successfully inserted ${data.knowledgeBase.length} knowledge base entries`);
     } catch (error) {
         console.error('Error populating dummy data:', error);
+        console.error('Make sure data/dummy.json exists and is properly formatted');
     }
 }
 
@@ -127,11 +113,10 @@ async function initializeModel() {
         updateStatus('ready', 'Model ready! Initializing RAG database...');
         
         // Initialize vector database for RAG
-        await initializeVectorDB();
+        const loadedFromExport = await initializeVectorDB();
 
-        // Populate database with dummy technical support data only if it's empty
-        // (if we imported from hardcoded export, skip dummy data)
-        if (!DB_EXPORT_DATA) {
+        // Populate database with dummy data only if we didn't load from database.json
+        if (!loadedFromExport) {
             await populateDummyData();
         }
 
