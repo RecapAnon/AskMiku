@@ -157,36 +157,22 @@ async function generateResponse(userMessage) {
             }
         }
 
-        // Create enhanced user message with context
         const enhancedMessage = contextInfo
             ? userMessage + contextInfo
             : userMessage;
-
-        // Add user message to history (with context if available)
         conversationHistory.push({ role: "user", content: enhancedMessage });
-        
-        // Create streaming message container
         const responseContainer = createStreamingMessageContainer();
-
-        // Generate response with streaming
         const streamer = new TextStreamer(generator.tokenizer, {
             skip_prompt: true,
             skip_special_tokens: true
         });
-
         const output = await generator(conversationHistory, {
             max_new_tokens: 512,
             do_sample: false,
             streamer: streamer
         });
-
-        // Extract the generated text
         const generatedText = output[0].generated_text.at(-1).content;
-
-        // Add assistant response to history
         conversationHistory.push({ role: "assistant", content: generatedText });
-
-        // Update final response
         responseContainer.textContent = generatedText || "I apologize, but I couldn't generate a response. Please try again.";
         
     } catch (error) {
