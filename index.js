@@ -28,22 +28,28 @@ async function initializeVectorDB() {
 
         console.log('EntityDB initialized successfully');
 
-        // Try to load database.json if it exists
-        try {
-            console.log('Checking for database.json...');
-            const response = await fetch('data/database.json');
-            
-            if (response.ok) {
-                console.log('Found database.json, importing...');
-                const jsonString = await response.text();
-                await importDatabaseFromString(jsonString);
-                console.log('Database imported from database.json successfully');
-                return true; // Signal that we loaded from export
+        // Only load from database.json if not already loaded (to prevent duplication)
+        const dbLoadedFromJson = localStorage.getItem('dbLoadedFromJson');
+        if (!dbLoadedFromJson) {
+            try {
+                console.log('Checking for database.json...');
+                const response = await fetch('data/database.json');
+
+                if (response.ok) {
+                    console.log('Found database.json, importing...');
+                    const jsonString = await response.text();
+                    await importDatabaseFromString(jsonString);
+                    localStorage.setItem('dbLoadedFromJson', 'true');
+                    console.log('Database imported from database.json successfully (first time)');
+                    return true; // Signal that we loaded from export
+                }
+            } catch (error) {
+                console.log('No database.json found or failed to load, will use dummy data');
             }
-        } catch (error) {
-            console.log('No database.json found or failed to load, will use dummy data');
+        } else {
+            console.log('Database already loaded from JSON, skipping import to prevent duplication');
         }
-        
+
         return false; // Signal that we need to load dummy data
     } catch (error) {
         console.error('Error initializing EntityDB:', error);
