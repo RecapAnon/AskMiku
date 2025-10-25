@@ -1,4 +1,4 @@
-import { pipeline, TextStreamer } from "https://cdn.jsdelivr.net/npm/@huggingface/transformers@3.7.6";
+import { pipeline, TextStreamer } from "https://cdn.jsdelivr.net/npm/@huggingface/transformers@3.7.6/dist/transformers.min.js";
 
 // DOM Elements
 const chatContainer = document.getElementById('chatContainer');
@@ -17,12 +17,21 @@ let isGenerating = false;
 // Initialize the model
 async function initializeModel() {
     try {
-        updateStatus('loading', 'Loading Qwen3 model...');
+        updateStatus('loading', 'Loading Qwen3 model... This may take a minute on first load.');
         
         generator = await pipeline(
             "text-generation",
             "onnx-community/Qwen3-0.6B-ONNX",
-            { dtype: "q4f16" }
+            {
+                dtype: "q4f16",
+                device: "wasm",
+                progress_callback: (progress) => {
+                    if (progress.status === 'progress') {
+                        const percent = Math.round((progress.loaded / progress.total) * 100);
+                        updateStatus('loading', `Loading model... ${percent}%`);
+                    }
+                }
+            }
         );
         
         updateStatus('ready', 'Model ready!');
