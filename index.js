@@ -1,6 +1,6 @@
 import { EntityDB } from "./entity-db.js";
 import { pipeline, TextStreamer } from "https://cdn.jsdelivr.net/npm/@huggingface/transformers@3.7.6/dist/transformers.min.js";
-import { exportToJsonString, importFromJsonString, clearDatabase } from "https://cdn.jsdelivr.net/npm/indexeddb-export-import@2.1.5/index.min.js";
+import * as IDBExportImport from "https://cdn.jsdelivr.net/npm/indexeddb-export-import@2.1.5/index.min.js";
 
 // DOM Elements
 const chatContainer = document.getElementById('chatContainer');
@@ -311,7 +311,7 @@ async function exportDatabaseToString() {
         const nativeDB = await vectorDB.getNativeDB();
         
         return new Promise((resolve, reject) => {
-            exportToJsonString(nativeDB, (err, jsonString) => {
+            IDBExportImport.exportToJsonString(nativeDB, (err, jsonString) => {
                 if (err) {
                     console.error('Error exporting database:', err);
                     reject(err);
@@ -342,7 +342,7 @@ async function importDatabaseFromString(jsonString) {
         const nativeDB = await vectorDB.getNativeDB();
         
         return new Promise((resolve, reject) => {
-            importFromJsonString(nativeDB, jsonString, (err) => {
+            IDBExportImport.importFromJsonString(nativeDB, jsonString, (err) => {
                 if (err) {
                     console.error('Error importing database:', err);
                     reject(err);
@@ -372,7 +372,7 @@ async function clearDatabaseData() {
         const nativeDB = await vectorDB.getNativeDB();
         
         return new Promise((resolve, reject) => {
-            clearDatabase(nativeDB, (err) => {
+            IDBExportImport.clearDatabase(nativeDB, (err) => {
                 if (err) {
                     console.error('Error clearing database:', err);
                     reject(err);
@@ -517,4 +517,5 @@ window.ragHelpers = {
     importDatabase: importDatabaseFromString,
     clearDatabase: clearDatabaseData
 };
+
 
