@@ -14,7 +14,7 @@
 
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(135deg, #39C6C6 0%, #4EC7CF 50%, #00A3AF 100%);
             min-height: 100vh;
             display: flex;
             justify-content: center;
@@ -36,10 +36,27 @@
         }
 
         .header {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(135deg, #39C6C6 0%, #4EC7CF 50%, #00A3AF 100%);
             color: white;
             padding: 20px;
             text-align: center;
+            position: relative;
+        }
+
+        /* .header::before {
+            content: "";
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: linear-gradient(90deg, #FF92E1, #39C6C6, #FF92E1);
+            animation: shimmer 3s infinite;
+        } */
+
+        @keyframes shimmer {
+            0% { background-position: -200px 0; }
+            100% { background-position: calc(200px + 100%) 0; }
         }
 
         .header h1 {
@@ -61,17 +78,17 @@
             width: 8px;
             height: 8px;
             border-radius: 50%;
-            background: #ffd700;
+            background: #FF92E1;
             animation: pulse 2s infinite;
         }
 
         .status-indicator.ready {
-            background: #4ade80;
+            background: #39C6C6;
             animation: none;
         }
 
         .status-indicator.error {
-            background: #ef4444;
+            background: #FF4081;
             animation: none;
         }
 
@@ -125,7 +142,7 @@
         }
 
         .message.user .message-avatar {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(135deg, #39C6C6 0%, #4EC7CF 50%, #00A3AF 100%);
         }
 
         .message.assistant .message-avatar {
@@ -141,7 +158,7 @@
         }
 
         .message.user .message-content {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(135deg, #39C6C6 0%, #4EC7CF 50%, #00A3AF 100%);
             color: white;
         }
 
@@ -149,6 +166,7 @@
             background: white;
             color: #1f2937;
             box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            border-left: 3px solid #39C6C6;
         }
 
         .input-container {
@@ -170,7 +188,7 @@
         }
 
         .input-field:focus {
-            border-color: #667eea;
+            border-color: #39C6C6;
         }
 
         .input-field:disabled {
@@ -180,7 +198,7 @@
 
         .send-button {
             padding: 12px 28px;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(135deg, #39C6C6 0%, #4EC7CF 50%, #00A3AF 100%);
             color: white;
             border: none;
             border-radius: 24px;
@@ -192,7 +210,7 @@
 
         .send-button:hover:not(:disabled) {
             transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+            box-shadow: 0 4px 12px rgba(57, 198, 198, 0.4);
         }
 
         .send-button:active:not(:disabled) {
@@ -255,9 +273,9 @@
 
         <div class="chat-container" id="chatContainer">
             <div class="message assistant">
-                <div class="message-avatar">🤖</div>
+                <div class="message-avatar">🎤</div>
                 <div class="message-content">
-                    Hello! I'm your technical support assistant powered by Qwen3. How can I help you today?
+                    Hello! I'm Hatsune Miku, your virtual assistant. How can I help you today?
                 </div>
             </div>
         </div>
