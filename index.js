@@ -17,7 +17,6 @@ let conversationHistory = [
 ];
 let isGenerating = false;
 
-// Initialize the vector database
 async function initializeVectorDB() {
     try {
         console.log('Initializing EntityDB for RAG...');
@@ -53,44 +52,6 @@ async function initializeVectorDB() {
     }
 }
 
-// Populate database with dummy technical support data from external file
-async function populateDummyData() {
-    if (!vectorDB) return;
-    
-    try {
-        console.log('Loading dummy data from data/dummy.json...');
-        
-        // Fetch dummy data from external JSON file
-        const response = await fetch('data/dummy.json');
-        if (!response.ok) {
-            throw new Error(`Failed to load dummy.json: ${response.statusText}`);
-        }
-
-        const data = await response.json();
-        
-        if (!data.knowledgeBase || !Array.isArray(data.knowledgeBase)) {
-            throw new Error('Invalid dummy.json format: missing knowledgeBase array');
-        }
-
-        console.log(`Populating database with ${data.knowledgeBase.length} entries...`);
-
-        // Insert each entry into the database with embeddings
-        for (const entry of data.knowledgeBase) {
-            await vectorDB.insert({
-                text: entry.text,
-                category: entry.category,
-                topic: entry.topic
-            });
-        }
-        
-        console.log(`Successfully inserted ${data.knowledgeBase.length} knowledge base entries`);
-    } catch (error) {
-        console.error('Error populating dummy data:', error);
-        console.error('Make sure data/dummy.json exists and is properly formatted');
-    }
-}
-
-// Initialize the model
 async function initializeModel() {
     try {
         updateStatus('loading', 'Loading Qwen3 model... This may take a minute on first load.');
@@ -111,14 +72,7 @@ async function initializeModel() {
         );
 
         updateStatus('ready', 'Model ready! Initializing RAG database...');
-        
-        // Initialize vector database for RAG
-        const loadedFromExport = await initializeVectorDB();
-
-        // Populate database with dummy data only if we didn't load from database.json
-        if (!loadedFromExport) {
-            await populateDummyData();
-        }
+        await initializeVectorDB();
 
         updateStatus('ready', 'Ready!');
         userInput.disabled = false;
@@ -132,13 +86,11 @@ async function initializeModel() {
     }
 }
 
-// Update status indicator
 function updateStatus(state, text) {
     statusText.textContent = text;
     statusIndicator.className = `status-indicator ${state}`;
 }
 
-// Add message to chat
 function addMessage(role, content) {
     const messageDiv = document.createElement('div');
     messageDiv.className = `message ${role}`;
@@ -161,8 +113,7 @@ function addMessage(role, content) {
     return contentDiv;
 }
 
-// Create streaming message container
-function createStreamingMessage() {
+function createStreamingMessageContainer() {
     const messageDiv = document.createElement('div');
     messageDiv.className = 'message assistant';
     
@@ -183,7 +134,6 @@ function createStreamingMessage() {
     return contentDiv;
 }
 
-// Generate response
 async function generateResponse(userMessage) {
     if (isGenerating || !generator) return;
     
@@ -216,7 +166,7 @@ async function generateResponse(userMessage) {
         conversationHistory.push({ role: "user", content: enhancedMessage });
         
         // Create streaming message container
-        const responseContainer = createStreamingMessage();
+        const responseContainer = createStreamingMessageContainer();
 
         // Generate response with streaming
         const streamer = new TextStreamer(generator.tokenizer, {
@@ -250,25 +200,16 @@ async function generateResponse(userMessage) {
     }
 }
 
-// Handle send message
 async function handleSendMessage() {
     const message = userInput.value.trim();
-    
     if (!message || isGenerating) return;
-    
-    // Add user message to UI
     addMessage('user', message);
-    
-    // Clear input
     userInput.value = '';
-    
-    // Generate response
     await generateResponse(message);
 }
 
 // Event listeners
 sendButton.addEventListener('click', handleSendMessage);
-
 userInput.addEventListener('keypress', (e) => {
     if (e.key === 'Enter' && !e.shiftKey) {
         e.preventDefault();
@@ -276,7 +217,6 @@ userInput.addEventListener('keypress', (e) => {
     }
 });
 
-// Initialize model on page load
 initializeModel();
 // ============================================================================
 // Database Export/Import Functions
@@ -490,17 +430,3 @@ async function queryBinaryMemorySIMD(queryText, topK = 5) {
         return [];
     }
 }
-
-// Export RAG and database management functions to global scope for console testing
-window.ragHelpers = {
-    insertMemory,
-    queryMemory,
-    insertBinaryMemory,
-    queryBinaryMemory,
-    queryBinaryMemorySIMD,
-    exportDatabase: exportDatabaseToString,
-    importDatabase: importDatabaseFromString,
-    clearDatabase: clearDatabaseData
-};
-
-
