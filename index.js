@@ -1,4 +1,5 @@
 import { pipeline, TextStreamer } from "https://cdn.jsdelivr.net/npm/@huggingface/transformers@3.7.6/dist/transformers.min.js";
+import { EntityDB } from "https://cdn.jsdelivr.net/npm/@babycommando/entity-db@latest/+esm";
 
 // DOM Elements
 const chatContainer = document.getElementById('chatContainer');
@@ -9,16 +10,34 @@ const statusText = document.getElementById('statusText');
 
 // State
 let generator = null;
+let vectorDB = null;
 let conversationHistory = [
     { role: "system", content: "You are a helpful technical support assistant." }
 ];
 let isGenerating = false;
 
+// Initialize the vector database
+async function initializeVectorDB() {
+    try {
+        console.log('Initializing EntityDB for RAG...');
+        
+        vectorDB = new EntityDB({
+            vectorPath: "askmiku-memory",
+            model: "Xenova/all-MiniLM-L6-v2"
+        });
+        
+        console.log('EntityDB initialized successfully');
+    } catch (error) {
+        console.error('Error initializing EntityDB:', error);
+        // Non-fatal - RAG features will be unavailable but chatbot still works
+    }
+}
+
 // Initialize the model
 async function initializeModel() {
     try {
         updateStatus('loading', 'Loading Qwen3 model... This may take a minute on first load.');
-        
+
         generator = await pipeline(
             "text-generation",
             "onnx-community/Qwen3-0.6B-ONNX",
@@ -33,8 +52,13 @@ async function initializeModel() {
                 }
             }
         );
+
+        updateStatus('ready', 'Model ready! Initializing RAG database...');
         
-        updateStatus('ready', 'Model ready!');
+        // Initialize vector database for RAG
+        await initializeVectorDB();
+        
+        updateStatus('ready', 'Ready!');
         userInput.disabled = false;
         sendButton.disabled = false;
         userInput.focus();
@@ -172,3 +196,130 @@ userInput.addEventListener('keypress', (e) => {
 
 // Initialize model on page load
 initializeModel();
+// ============================================================================
+// RAG (Retrieval-Augmented Generation) Helper Functions
+// ============================================================================
+// These functions provide vector search capabilities using EntityDB
+// Population of the database will be handled separately
+
+/**
+ * Insert text into the vector database with automatic embedding generation
+ * @param {string} text - The text to embed and store
+ * @param {object} metadata - Optional metadata to store with the vector
+ * @returns {Promise<void>}
+ */
+async function insertMemory(text, metadata = {}) {
+    if (!vectorDB) {
+        console.warn('VectorDB not initialized. RAG features unavailable.');
+        return;
+    }
+    
+    try {
+        await vectorDB.insert({
+            text: text,
+            ...metadata
+        });
+        console.log('Memory inserted:', text.substring(0, 50) + '...');
+    } catch (error) {
+        console.error('Error inserting memory:', error);
+    }
+}
+
+/**
+ * Query the vector database using semantic similarity
+ * @param {string} queryText - The text to search for
+ * @param {number} topK - Number of results to return (default: 5)
+ * @returns {Promise<Array>} Array of similar results
+ */
+async function queryMemory(queryText, topK = 5) {
+    if (!vectorDB) {
+        console.warn('VectorDB not initialized. RAG features unavailable.');
+        return [];
+    }
+    
+    try {
+        const results = await vectorDB.query(queryText, topK);
+        console.log(`Found ${results.length} similar memories`);
+        return results;
+    } catch (error) {
+        console.error('Error querying memory:', error);
+        return [];
+    }
+}
+
+/**
+ * Insert text with binary vector encoding (faster, slightly less accurate)
+ * @param {string} text - The text to embed and store
+ * @param {object} metadata - Optional metadata to store with the vector
+ * @returns {Promise<void>}
+ */
+async function insertBinaryMemory(text, metadata = {}) {
+    if (!vectorDB) {
+        console.warn('VectorDB not initialized. RAG features unavailable.');
+        return;
+    }
+    
+    try {
+        await vectorDB.insertBinary({
+            text: text,
+            ...metadata
+        });
+        console.log('Binary memory inserted:', text.substring(0, 50) + '...');
+    } catch (error) {
+        console.error('Error inserting binary memory:', error);
+    }
+}
+
+/**
+ * Query using binary vectors (extremely fast, uses Hamming distance)
+ * @param {string} queryText - The text to search for
+ * @param {number} topK - Number of results to return (default: 5)
+ * @returns {Promise<Array>} Array of similar results
+ */
+async function queryBinaryMemory(queryText, topK = 5) {
+    if (!vectorDB) {
+        console.warn('VectorDB not initialized. RAG features unavailable.');
+        return [];
+    }
+    
+    try {
+        const results = await vectorDB.queryBinary(queryText, topK);
+        console.log(`Found ${results.length} similar memories (binary)`);
+        return results;
+    } catch (error) {
+        console.error('Error querying binary memory:', error);
+        return [];
+    }
+}
+
+/**
+ * Query using binary vectors with SIMD acceleration (fastest option)
+ * @param {string} queryText - The text to search for
+ * @param {number} topK - Number of results to return (default: 5)
+ * @returns {Promise<Array>} Array of similar results
+ */
+async function queryBinaryMemorySIMD(queryText, topK = 5) {
+    if (!vectorDB) {
+        console.warn('VectorDB not initialized. RAG features unavailable.');
+        return [];
+    }
+    
+    try {
+        const results = await vectorDB.queryBinarySIMD(queryText, topK);
+        console.log(`Found ${results.length} similar memories (binary SIMD)`);
+        return results;
+    } catch (error) {
+        console.error('Error querying binary memory with SIMD:', error);
+        return [];
+    }
+}
+
+// Export RAG functions to global scope for console testing
+window.ragHelpers = {
+    insertMemory,
+    queryMemory,
+    insertBinaryMemory,
+    queryBinaryMemory,
+    queryBinaryMemorySIMD
+};
+
