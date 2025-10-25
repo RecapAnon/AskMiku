@@ -318,7 +318,7 @@
                 showStatusMessage('importStatus', 'Importing data to database...', 'info');
 
                 // Import to database
-                const nativeDB = await vectorDB.getNativeDB();
+                const nativeDB = indexedDB.open("EntityDB", 1);
                 await new Promise((resolve, reject) => {
                     IDBExportImport.importFromJsonString(nativeDB, jsonString, (err) => {
                         if (err) reject(err);
@@ -399,7 +399,7 @@
                 }
 
                 // Export database
-                const nativeDB = await vectorDB.getNativeDB();
+                const nativeDB = indexedDB.open("EntityDB", 1);
                 const jsonString = await new Promise((resolve, reject) => {
                     IDBExportImport.exportToJsonString(nativeDB, (err, data) => {
                         if (err) reject(err);
@@ -445,7 +445,7 @@
                     await initializeVectorDB();
                 }
 
-                const nativeDB = await vectorDB.getNativeDB();
+                const nativeDB = indexedDB.open("EntityDB", 1);
                 await new Promise((resolve, reject) => {
                     IDBExportImport.clearDatabase(nativeDB, (err) => {
                         if (err) reject(err);

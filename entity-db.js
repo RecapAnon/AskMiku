@@ -126,15 +126,6 @@ class EntityDB {
     return db;
   }
 
-  // Get native IDBDatabase for export/import operations
-  async getNativeDB() {
-    return new Promise((resolve, reject) => {
-      const request = indexedDB.open("EntityDB", 1);
-      request.onsuccess = () => resolve(request.result);
-      request.onerror = () => reject(request.error);
-    });
-  }
-
   // Insert data by generating embeddings from text
   async insert(data) {
     try {

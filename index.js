@@ -29,7 +29,7 @@ async function importDatabaseFromString(jsonString) {
     }
 
     try {
-        const nativeDB = await vectorDB.getNativeDB();
+        const nativeDB = indexedDB.open("EntityDB", 1);
         
         return new Promise((resolve, reject) => {
             IDBExportImport.importFromJsonString(nativeDB, jsonString, (err) => {
