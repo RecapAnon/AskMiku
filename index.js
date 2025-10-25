@@ -33,6 +33,66 @@ async function initializeVectorDB() {
     }
 }
 
+// Populate database with dummy technical support data
+async function populateDummyData() {
+    if (!vectorDB) return;
+    
+    try {
+        console.log('Populating database with dummy technical support data...');
+        
+        const dummyData = [
+            {
+                text: "To reset your password, go to Settings > Security > Change Password. You'll need to verify your email address first.",
+                category: "password",
+                topic: "account_security"
+            },
+            {
+                text: "If your application is running slowly, try clearing the cache by going to Settings > Advanced > Clear Cache. This often resolves performance issues.",
+                category: "performance",
+                topic: "troubleshooting"
+            },
+            {
+                text: "To enable two-factor authentication, navigate to Settings > Security > Two-Factor Authentication and follow the setup wizard.",
+                category: "security",
+                topic: "account_security"
+            },
+            {
+                text: "Error code 404 means the requested resource was not found. Check the URL for typos or contact support if the problem persists.",
+                category: "errors",
+                topic: "troubleshooting"
+            },
+            {
+                text: "To export your data, go to Settings > Data & Privacy > Export Data. The export process may take several minutes depending on data size.",
+                category: "data",
+                topic: "data_management"
+            },
+            {
+                text: "Browser compatibility issues can often be resolved by updating to the latest version or trying a different browser like Chrome or Firefox.",
+                category: "compatibility",
+                topic: "troubleshooting"
+            },
+            {
+                text: "API rate limits are 1000 requests per hour for free tier and 10000 for premium. Upgrade your plan if you need higher limits.",
+                category: "api",
+                topic: "technical_limits"
+            },
+            {
+                text: "To integrate with third-party services, use the API key found in Settings > Developer > API Keys. Keep this key secret.",
+                category: "integration",
+                topic: "api_integration"
+            }
+        ];
+
+        for (const item of dummyData) {
+            await vectorDB.insert(item);
+        }
+        
+        console.log(`Successfully inserted ${dummyData.length} knowledge base entries`);
+    } catch (error) {
+        console.error('Error populating dummy data:', error);
+    }
+}
+
 // Initialize the model
 async function initializeModel() {
     try {
@@ -58,6 +118,9 @@ async function initializeModel() {
         // Initialize vector database for RAG
         await initializeVectorDB();
         
+        // Populate database with dummy technical support data
+        await populateDummyData();
+
         updateStatus('ready', 'Ready!');
         userInput.disabled = false;
         sendButton.disabled = false;
@@ -130,8 +193,27 @@ async function generateResponse(userMessage) {
     userInput.disabled = true;
     
     try {
-        // Add user message to history
-        conversationHistory.push({ role: "user", content: userMessage });
+        // Query the vector database for relevant context
+        let contextInfo = "";
+        if (vectorDB) {
+            const relevantDocs = await vectorDB.query(userMessage, { limit: 3 });
+            
+            if (relevantDocs && relevantDocs.length > 0) {
+                console.log('Found relevant knowledge base entries:', relevantDocs.length);
+                contextInfo = "\n\nRelevant information from knowledge base:\n";
+                relevantDocs.forEach((doc, index) => {
+                    contextInfo += `${index + 1}. ${doc.text}\n`;
+                });
+            }
+        }
+
+        // Create enhanced user message with context
+        const enhancedMessage = contextInfo
+            ? userMessage + contextInfo
+            : userMessage;
+
+        // Add user message to history (with context if available)
+        conversationHistory.push({ role: "user", content: enhancedMessage });
         
         // Create streaming message container
         const responseContainer = createStreamingMessage();
