@@ -111,36 +111,27 @@ async function generateResponse(userMessage) {
         
         // Create streaming message container
         const responseContainer = createStreamingMessage();
-        let fullResponse = '';
-        
-        // Create custom streamer that updates the UI
-        class UIStreamer extends TextStreamer {
-            put(value) {
-                super.put(value);
-                const text = this.decode(value);
-                fullResponse += text;
-                responseContainer.textContent = fullResponse;
-                chatContainer.scrollTop = chatContainer.scrollHeight;
-            }
-        }
-        
+
         // Generate response with streaming
-        const streamer = new UIStreamer(generator.tokenizer, {
+        const streamer = new TextStreamer(generator.tokenizer, {
             skip_prompt: true,
             skip_special_tokens: true
         });
-        
-        await generator(conversationHistory, {
+
+        const output = await generator(conversationHistory, {
             max_new_tokens: 512,
             do_sample: false,
             streamer: streamer
         });
-        
+
+        // Extract the generated text
+        const generatedText = output[0].generated_text.at(-1).content;
+
         // Add assistant response to history
-        conversationHistory.push({ role: "assistant", content: fullResponse.trim() });
-        
+        conversationHistory.push({ role: "assistant", content: generatedText });
+
         // Update final response
-        responseContainer.textContent = fullResponse.trim() || "I apologize, but I couldn't generate a response. Please try again.";
+        responseContainer.textContent = generatedText || "I apologize, but I couldn't generate a response. Please try again.";
         
     } catch (error) {
         console.error('Error generating response:', error);
