@@ -209,8 +209,9 @@ async function generateResponse(userMessage) {
             streamer: streamer
         });
         const generatedText = output[0].generated_text.at(-1).content;
-        conversationHistory.push({ role: "assistant", content: generatedText });
-        responseContainer.textContent = generatedText || "I apologize, but I couldn't generate a response. Please try again.";
+        const cleanText = generatedText.replace(/<think>[\s\S]*?<\/think>/g, '').trim();
+        conversationHistory.push({ role: "assistant", content: cleanText });
+        responseContainer.textContent = cleanText || "I apologize, but I couldn't generate a response. Please try again.";
         
     } catch (error) {
         console.error('Error generating response:', error);
