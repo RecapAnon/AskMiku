@@ -17,6 +17,37 @@ let conversationHistory = [
 ];
 let isGenerating = false;
 
+/**
+ * Import database data from a JSON string
+ * @param {string} jsonString - JSON string containing database data
+ * @returns {Promise<boolean>} True if successful
+ */
+async function importDatabaseFromString(jsonString) {
+    if (!vectorDB) {
+        console.warn('VectorDB not initialized. Cannot import.');
+        return false;
+    }
+
+    try {
+        const nativeDB = await vectorDB.getNativeDB();
+        
+        return new Promise((resolve, reject) => {
+            IDBExportImport.importFromJsonString(nativeDB, jsonString, (err) => {
+                if (err) {
+                    console.error('Error importing database:', err);
+                    reject(err);
+                } else {
+                    console.log('Database imported successfully');
+                    resolve(true);
+                }
+            });
+        });
+    } catch (error) {
+        console.error('Error importing database:', error);
+        return false;
+    }
+}
+
 async function initializeVectorDB() {
     try {
         console.log('Initializing EntityDB for RAG...');
