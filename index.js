@@ -1,5 +1,6 @@
 import { EntityDB } from "./entity-db.js";
 import { pipeline, TextStreamer } from "https://cdn.jsdelivr.net/npm/@huggingface/transformers@3.7.6/dist/transformers.min.js";
+import { exportToJsonString, importFromJsonString, clearDatabase } from "https://cdn.jsdelivr.net/npm/indexeddb-export-import@2.1.5/index.min.js";
 
 // DOM Elements
 const chatContainer = document.getElementById('chatContainer');
@@ -16,17 +17,27 @@ let conversationHistory = [
 ];
 let isGenerating = false;
 
+// Hardcoded database export - will be imported if available
+const DB_EXPORT_DATA = null; // Will be populated after first export
+
 // Initialize the vector database
 async function initializeVectorDB() {
     try {
         console.log('Initializing EntityDB for RAG...');
-        
+
         vectorDB = new EntityDB({
             vectorPath: "askmiku-memory",
             model: "Xenova/all-MiniLM-L6-v2"
         });
-        
+
         console.log('EntityDB initialized successfully');
+
+        // Check if we should import from hardcoded export
+        if (DB_EXPORT_DATA) {
+            console.log('Found hardcoded export data, importing...');
+            await importDatabaseFromString(DB_EXPORT_DATA);
+            console.log('Database imported from hardcoded export successfully');
+        }
     } catch (error) {
         console.error('Error initializing EntityDB:', error);
         // Non-fatal - RAG features will be unavailable but chatbot still works
@@ -117,9 +128,12 @@ async function initializeModel() {
         
         // Initialize vector database for RAG
         await initializeVectorDB();
-        
-        // Populate database with dummy technical support data
-        await populateDummyData();
+
+        // Populate database with dummy technical support data only if it's empty
+        // (if we imported from hardcoded export, skip dummy data)
+        if (!DB_EXPORT_DATA) {
+            await populateDummyData();
+        }
 
         updateStatus('ready', 'Ready!');
         userInput.disabled = false;
@@ -280,6 +294,101 @@ userInput.addEventListener('keypress', (e) => {
 // Initialize model on page load
 initializeModel();
 // ============================================================================
+// Database Export/Import Functions
+// ============================================================================
+
+/**
+ * Export the entire vector database to a JSON string
+ * @returns {Promise<string>} JSON string containing all database data
+ */
+async function exportDatabaseToString() {
+    if (!vectorDB) {
+        console.warn('VectorDB not initialized. Cannot export.');
+        return null;
+    }
+
+    try {
+        const nativeDB = await vectorDB.getNativeDB();
+        
+        return new Promise((resolve, reject) => {
+            exportToJsonString(nativeDB, (err, jsonString) => {
+                if (err) {
+                    console.error('Error exporting database:', err);
+                    reject(err);
+                } else {
+                    console.log('Database exported successfully');
+                    resolve(jsonString);
+                }
+            });
+        });
+    } catch (error) {
+        console.error('Error exporting database:', error);
+        return null;
+    }
+}
+
+/**
+ * Import database data from a JSON string
+ * @param {string} jsonString - JSON string containing database data
+ * @returns {Promise<boolean>} True if successful
+ */
+async function importDatabaseFromString(jsonString) {
+    if (!vectorDB) {
+        console.warn('VectorDB not initialized. Cannot import.');
+        return false;
+    }
+
+    try {
+        const nativeDB = await vectorDB.getNativeDB();
+        
+        return new Promise((resolve, reject) => {
+            importFromJsonString(nativeDB, jsonString, (err) => {
+                if (err) {
+                    console.error('Error importing database:', err);
+                    reject(err);
+                } else {
+                    console.log('Database imported successfully');
+                    resolve(true);
+                }
+            });
+        });
+    } catch (error) {
+        console.error('Error importing database:', error);
+        return false;
+    }
+}
+
+/**
+ * Clear all data from the database
+ * @returns {Promise<boolean>} True if successful
+ */
+async function clearDatabaseData() {
+    if (!vectorDB) {
+        console.warn('VectorDB not initialized. Cannot clear.');
+        return false;
+    }
+
+    try {
+        const nativeDB = await vectorDB.getNativeDB();
+        
+        return new Promise((resolve, reject) => {
+            clearDatabase(nativeDB, (err) => {
+                if (err) {
+                    console.error('Error clearing database:', err);
+                    reject(err);
+                } else {
+                    console.log('Database cleared successfully');
+                    resolve(true);
+                }
+            });
+        });
+    } catch (error) {
+        console.error('Error clearing database:', error);
+        return false;
+    }
+}
+
+// ============================================================================
 // RAG (Retrieval-Augmented Generation) Helper Functions
 // ============================================================================
 // These functions provide vector search capabilities using EntityDB
@@ -397,12 +506,15 @@ async function queryBinaryMemorySIMD(queryText, topK = 5) {
     }
 }
 
-// Export RAG functions to global scope for console testing
+// Export RAG and database management functions to global scope for console testing
 window.ragHelpers = {
     insertMemory,
     queryMemory,
     insertBinaryMemory,
     queryBinaryMemory,
-    queryBinaryMemorySIMD
+    queryBinaryMemorySIMD,
+    exportDatabase: exportDatabaseToString,
+    importDatabase: importDatabaseFromString,
+    clearDatabase: clearDatabaseData
 };
 
