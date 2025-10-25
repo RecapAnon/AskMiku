@@ -326,6 +326,8 @@
                     });
                 });
 
+                localStorage.setItem('dbLoadedFromJson', 'true');
+                
                 showStatusMessage('importStatus', `✓ Successfully imported database from ${file.name}`, 'success');
             } catch (error) {
                 console.error('Import error:', error);
@@ -370,6 +372,8 @@
                         topic: entry.topic
                     });
                 }
+
+                localStorage.setItem('dbLoadedFromJson', 'true');
 
                 showStatusMessage('importStatus', `✓ Successfully loaded ${data.knowledgeBase.length} dummy entries`, 'success');
             } catch (error) {
@@ -448,6 +452,8 @@
                         else resolve();
                     });
                 });
+
+                localStorage.removeItem('dbLoadedFromJson');
 
                 showStatusMessage('clearStatus', '✓ Database cleared successfully', 'success');
             } catch (error) {
