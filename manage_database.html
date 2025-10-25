@@ -264,7 +264,6 @@
 
         let vectorDB = null;
 
-        // Initialize vector database
         async function initializeVectorDB() {
             try {
                 vectorDB = new EntityDB({
@@ -275,13 +274,12 @@
                 return true;
             } catch (error) {
                 console.error('Error initializing EntityDB:', error);
-                showStatus('importStatus', 'Error initializing database: ' + error.message, 'error');
+                showStatusMessage('importStatus', 'Error initializing database: ' + error.message, 'error');
                 return false;
             }
         }
 
-        // Show status message
-        function showStatus(elementId, message, type) {
+        function showStatusMessage(elementId, message, type) {
             const statusEl = document.getElementById(elementId);
             statusEl.textContent = message;
             statusEl.className = `status-message show status-${type}`;
@@ -293,7 +291,6 @@
             }
         }
 
-        // Handle file import
         window.handleImport = async function(input) {
             if (!input.files || !input.files[0]) return;
 
@@ -304,24 +301,21 @@
             try {
                 importBtn.disabled = true;
                 importBtn.innerHTML = '<span class="loading"></span> <span>Importing...</span>';
-                showStatus('importStatus', 'Reading file...', 'info');
+                showStatusMessage('importStatus', 'Reading file...', 'info');
 
-                // Initialize DB if needed
                 if (!vectorDB) {
                     await initializeVectorDB();
                 }
 
-                // Read file content
                 const jsonString = await file.text();
                 
-                // Validate JSON
                 try {
                     JSON.parse(jsonString);
                 } catch (e) {
                     throw new Error('Invalid JSON file: ' + e.message);
                 }
 
-                showStatus('importStatus', 'Importing data to database...', 'info');
+                showStatusMessage('importStatus', 'Importing data to database...', 'info');
 
                 // Import to database
                 const nativeDB = await vectorDB.getNativeDB();
@@ -332,18 +326,17 @@
                     });
                 });
 
-                showStatus('importStatus', `✓ Successfully imported database from ${file.name}`, 'success');
+                showStatusMessage('importStatus', `✓ Successfully imported database from ${file.name}`, 'success');
             } catch (error) {
                 console.error('Import error:', error);
-                showStatus('importStatus', `✗ Import failed: ${error.message}`, 'error');
+                showStatusMessage('importStatus', `✗ Import failed: ${error.message}`, 'error');
             } finally {
                 importBtn.disabled = false;
                 importBtn.innerHTML = originalText;
-                input.value = ''; // Reset file input
+                input.value = '';
             }
         };
 
-        // Load dummy data
         window.loadDummyData = async function() {
             const btn = document.getElementById('loadDummyBtn');
             const originalText = btn.innerHTML;
@@ -351,14 +344,12 @@
             try {
                 btn.disabled = true;
                 btn.innerHTML = '<span class="loading"></span> <span>Loading...</span>';
-                showStatus('importStatus', 'Loading dummy data from file...', 'info');
+                showStatusMessage('importStatus', 'Loading dummy data from file...', 'info');
 
-                // Initialize DB if needed
                 if (!vectorDB) {
                     await initializeVectorDB();
                 }
 
-                // Fetch dummy data
                 const response = await fetch('data/dummy.json');
                 if (!response.ok) {
                     throw new Error(`Failed to load dummy.json: ${response.statusText}`);
@@ -370,9 +361,8 @@
                     throw new Error('Invalid dummy.json format: missing knowledgeBase array');
                 }
 
-                showStatus('importStatus', `Inserting ${data.knowledgeBase.length} entries...`, 'info');
+                showStatusMessage('importStatus', `Inserting ${data.knowledgeBase.length} entries...`, 'info');
 
-                // Insert each entry
                 for (const entry of data.knowledgeBase) {
                     await vectorDB.insert({
                         text: entry.text,
@@ -381,17 +371,16 @@
                     });
                 }
 
-                showStatus('importStatus', `✓ Successfully loaded ${data.knowledgeBase.length} dummy entries`, 'success');
+                showStatusMessage('importStatus', `✓ Successfully loaded ${data.knowledgeBase.length} dummy entries`, 'success');
             } catch (error) {
                 console.error('Load dummy data error:', error);
-                showStatus('importStatus', `✗ Failed to load dummy data: ${error.message}`, 'error');
+                showStatusMessage('importStatus', `✗ Failed to load dummy data: ${error.message}`, 'error');
             } finally {
                 btn.disabled = false;
                 btn.innerHTML = originalText;
             }
         };
 
-        // Handle export
         window.handleExport = async function() {
             const btn = document.getElementById('exportBtn');
             const originalText = btn.innerHTML;
@@ -399,9 +388,8 @@
             try {
                 btn.disabled = true;
                 btn.innerHTML = '<span class="loading"></span> <span>Exporting...</span>';
-                showStatus('exportStatus', 'Exporting database...', 'info');
+                showStatusMessage('exportStatus', 'Exporting database...', 'info');
 
-                // Initialize DB if needed
                 if (!vectorDB) {
                     await initializeVectorDB();
                 }
@@ -426,17 +414,16 @@
                 document.body.removeChild(a);
                 URL.revokeObjectURL(url);
 
-                showStatus('exportStatus', '✓ Database exported successfully', 'success');
+                showStatusMessage('exportStatus', '✓ Database exported successfully', 'success');
             } catch (error) {
                 console.error('Export error:', error);
-                showStatus('exportStatus', `✗ Export failed: ${error.message}`, 'error');
+                showStatusMessage('exportStatus', `✗ Export failed: ${error.message}`, 'error');
             } finally {
                 btn.disabled = false;
                 btn.innerHTML = originalText;
             }
         };
 
-        // Handle clear
         window.handleClear = async function() {
             if (!confirm('Are you sure you want to clear all database data? This cannot be undone.')) {
                 return;
@@ -448,14 +435,12 @@
             try {
                 btn.disabled = true;
                 btn.innerHTML = '<span class="loading"></span> <span>Clearing...</span>';
-                showStatus('clearStatus', 'Clearing database...', 'info');
+                showStatusMessage('clearStatus', 'Clearing database...', 'info');
 
-                // Initialize DB if needed
                 if (!vectorDB) {
                     await initializeVectorDB();
                 }
 
-                // Clear database
                 const nativeDB = await vectorDB.getNativeDB();
                 await new Promise((resolve, reject) => {
                     IDBExportImport.clearDatabase(nativeDB, (err) => {
@@ -464,17 +449,16 @@
                     });
                 });
 
-                showStatus('clearStatus', '✓ Database cleared successfully', 'success');
+                showStatusMessage('clearStatus', '✓ Database cleared successfully', 'success');
             } catch (error) {
                 console.error('Clear error:', error);
-                showStatus('clearStatus', `✗ Clear failed: ${error.message}`, 'error');
+                showStatusMessage('clearStatus', `✗ Clear failed: ${error.message}`, 'error');
             } finally {
                 btn.disabled = false;
                 btn.innerHTML = originalText;
             }
         };
 
-        // Initialize on page load
         initializeVectorDB();
     </script>
 </body>

@@ -28,7 +28,7 @@ async function initializeVectorDB() {
 
         console.log('EntityDB initialized successfully');
 
-        // Only load from database.json if not already loaded (to prevent duplication)
+        // Only load from database.json if not already loaded.
         const dbLoadedFromJson = localStorage.getItem('dbLoadedFromJson');
         if (!dbLoadedFromJson) {
             try {
@@ -47,7 +47,7 @@ async function initializeVectorDB() {
                 console.log('No database.json found or failed to load, will use dummy data');
             }
         } else {
-            console.log('Database already loaded from JSON, skipping import to prevent duplication');
+            console.log('Database already loaded from JSON, skipping import.');
         }
 
         return false; // Signal that we need to load dummy data
