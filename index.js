@@ -134,7 +134,17 @@ function addMessage(role, content) {
     
     const avatar = document.createElement('div');
     avatar.className = 'message-avatar';
-    avatar.textContent = role === 'user' ? '👤' : '🤖';
+    
+    // Create image element for avatar
+    const avatarImg = document.createElement('img');
+    avatarImg.src = role === 'user' ? 'https://files.catbox.moe/m5qftn.png' : 'https://files.catbox.moe/cbclyf.png';
+    avatarImg.alt = role === 'user' ? 'User' : 'Assistant';
+    avatarImg.style.width = '100%';
+    avatarImg.style.height = '100%';
+    avatarImg.style.borderRadius = '50%';
+    avatarImg.style.objectFit = 'cover';
+    
+    avatar.appendChild(avatarImg);
     
     const contentDiv = document.createElement('div');
     contentDiv.className = 'message-content';
@@ -156,7 +166,17 @@ function createStreamingMessageContainer() {
     
     const avatar = document.createElement('div');
     avatar.className = 'message-avatar';
-    avatar.textContent = '🤖';
+    
+    // Create image element for avatar
+    const avatarImg = document.createElement('img');
+    avatarImg.src = 'https://files.catbox.moe/cbclyf.png';
+    avatarImg.alt = 'Assistant';
+    avatarImg.style.width = '100%';
+    avatarImg.style.height = '100%';
+    avatarImg.style.borderRadius = '50%';
+    avatarImg.style.objectFit = 'cover';
+    
+    avatar.appendChild(avatarImg);
     
     const contentDiv = document.createElement('div');
     contentDiv.className = 'message-content';
