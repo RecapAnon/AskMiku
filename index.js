@@ -148,7 +148,10 @@ function addMessage(role, content) {
     
     const contentDiv = document.createElement('div');
     contentDiv.className = 'message-content';
-    contentDiv.textContent = content;
+    
+    const preElement = document.createElement('pre');
+    preElement.textContent = content;
+    contentDiv.appendChild(preElement);
     
     messageDiv.appendChild(avatar);
     messageDiv.appendChild(contentDiv);
@@ -180,7 +183,10 @@ function createStreamingMessageContainer() {
     
     const contentDiv = document.createElement('div');
     contentDiv.className = 'message-content';
-    contentDiv.innerHTML = '<span class="loading-dots">Thinking</span>';
+    
+    const preElement = document.createElement('pre');
+    preElement.innerHTML = '<span class="loading-dots">Thinking</span>';
+    contentDiv.appendChild(preElement);
     
     messageDiv.appendChild(avatar);
     messageDiv.appendChild(contentDiv);
@@ -231,7 +237,12 @@ async function generateResponse(userMessage) {
         const generatedText = output[0].generated_text.at(-1).content;
         const cleanText = generatedText.replace(/<think>[\s\S]*?<\/think>/g, '').trim();
         conversationHistory.push({ role: "assistant", content: cleanText });
-        responseContainer.textContent = cleanText || "I apologize, but I couldn't generate a response. Please try again.";
+        const preElement = responseContainer.querySelector('pre');
+        if (preElement) {
+            preElement.textContent = cleanText || "I apologize, but I couldn't generate a response. Please try again.";
+        } else {
+            responseContainer.textContent = cleanText || "I apologize, but I couldn't generate a response. Please try again.";
+        }
         
     } catch (error) {
         console.error('Error generating response:', error);
