@@ -258,9 +258,9 @@
         </div>
     </div>
 
+    <script src="https://cdn.jsdelivr.net/npm/indexeddb-export-import@2.1.5/index.min.js"></script>
     <script type="module">
         import { EntityDB } from "./entity-db.js";
-        import * as IDBExportImport from "https://cdn.jsdelivr.net/npm/indexeddb-export-import@2.1.5/index.min.js";
 
         let vectorDB = null;
 
@@ -320,7 +320,7 @@
                 // Import to database
                 const nativeDB = indexedDB.open("EntityDB", 1);
                 await new Promise((resolve, reject) => {
-                    IDBExportImport.importFromJsonString(nativeDB, jsonString, (err) => {
+                    importFromJsonString(nativeDB, jsonString, (err) => {
                         if (err) reject(err);
                         else resolve();
                     });
@@ -401,7 +401,7 @@
                 // Export database
                 const nativeDB = indexedDB.open("EntityDB", 1);
                 const jsonString = await new Promise((resolve, reject) => {
-                    IDBExportImport.exportToJsonString(nativeDB, (err, data) => {
+                    exportToJsonString(nativeDB, (err, data) => {
                         if (err) reject(err);
                         else resolve(data);
                     });
@@ -447,7 +447,7 @@
 
                 const nativeDB = indexedDB.open("EntityDB", 1);
                 await new Promise((resolve, reject) => {
-                    IDBExportImport.clearDatabase(nativeDB, (err) => {
+                    clearDatabase(nativeDB, (err) => {
                         if (err) reject(err);
                         else resolve();
                     });

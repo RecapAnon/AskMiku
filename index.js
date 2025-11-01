@@ -1,6 +1,5 @@
 import { EntityDB } from "./entity-db.js";
 import { pipeline, TextStreamer } from "https://cdn.jsdelivr.net/npm/@huggingface/transformers@3.7.6/dist/transformers.min.js";
-import * as IDBExportImport from "https://cdn.jsdelivr.net/npm/indexeddb-export-import@2.1.5/index.min.js";
 
 // DOM Elements
 const chatContainer = document.getElementById('chatContainer');
@@ -32,7 +31,7 @@ async function importDatabaseFromString(jsonString) {
         const nativeDB = indexedDB.open("EntityDB", 1);
         
         return new Promise((resolve, reject) => {
-            IDBExportImport.importFromJsonString(nativeDB, jsonString, (err) => {
+            importFromJsonString(nativeDB, jsonString, (err) => {
                 if (err) {
                     console.error('Error importing database:', err);
                     reject(err);
