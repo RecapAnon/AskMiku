@@ -12,7 +12,7 @@ env.localModelPath = "/huggingface";
 
 // Default pipeline (Xenova/all-MiniLM-L6-v2)
 const defaultModel = "Xenova/all-MiniLM-L6-v2";
-const pipePromise = pipeline("feature-extraction", defaultModel);
+const pipePromise = pipeline("feature-extraction", defaultModel, { device: "webgpu" });
 
 // Cosine similarity function
 const cosineSimilarity = (vecA, vecB) => {
