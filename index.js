@@ -24,6 +24,13 @@ Hatsune Miku can only communicate through text, so she can't send images or vide
 ];
 let isGenerating = false;
 
+async function getNativeDB() {
+    return new Promise((resolve, reject) => {
+        const request = indexedDB.open("EntityDB", 1);
+        request.onsuccess = () => resolve(request.result);
+        request.onerror = () => reject(request.error);
+    });
+}
 /**
  * Import database data from a JSON string
  * @param {string} jsonString - JSON string containing database data
@@ -36,7 +43,7 @@ async function importDatabaseFromString(jsonString) {
     }
 
     try {
-        const nativeDB = indexedDB.open("EntityDB", 1);
+        const nativeDB = await getNativeDB();
         
         return new Promise((resolve, reject) => {
             importFromJsonString(nativeDB, jsonString, (err) => {

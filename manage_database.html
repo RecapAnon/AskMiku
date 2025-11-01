@@ -264,6 +264,14 @@
 
         let vectorDB = null;
 
+        async function getNativeDB() {
+            return new Promise((resolve, reject) => {
+                const request = indexedDB.open("EntityDB", 1);
+                request.onsuccess = () => resolve(request.result);
+                request.onerror = () => reject(request.error);
+            });
+        }
+
         async function initializeVectorDB() {
             try {
                 vectorDB = new EntityDB({
@@ -318,7 +326,7 @@
                 showStatusMessage('importStatus', 'Importing data to database...', 'info');
 
                 // Import to database
-                const nativeDB = indexedDB.open("EntityDB", 1);
+                const nativeDB = await getNativeDB();
                 await new Promise((resolve, reject) => {
                     importFromJsonString(nativeDB, jsonString, (err) => {
                         if (err) reject(err);
@@ -399,7 +407,7 @@
                 }
 
                 // Export database
-                const nativeDB = indexedDB.open("EntityDB", 1);
+                const nativeDB = await getNativeDB();
                 const jsonString = await new Promise((resolve, reject) => {
                     exportToJsonString(nativeDB, (err, data) => {
                         if (err) reject(err);
@@ -445,7 +453,7 @@
                     await initializeVectorDB();
                 }
 
-                const nativeDB = indexedDB.open("EntityDB", 1);
+                const nativeDB = await getNativeDB();
                 await new Promise((resolve, reject) => {
                     clearDatabase(nativeDB, (err) => {
                         if (err) reject(err);
