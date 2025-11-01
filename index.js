@@ -104,6 +104,19 @@ async function initializeVectorDB() {
 }
 
 async function initializeModel() {
+    if (!navigator.gpu) {
+        updateStatus('error', 'WebGPU not supported.');
+        addMessage('assistant', `oh no`);
+        return;
+    }
+
+    const adapter = await navigator.gpu.requestAdapter();
+    if (!adapter) {
+        updateStatus('error', 'WebGPU device not found.');
+        addMessage('assistant', `oh no`);
+        return;
+    }
+
     try {
         updateStatus('loading', 'Loading Qwen3 model... This may take a minute on first load.');
 
@@ -112,7 +125,7 @@ async function initializeModel() {
             "onnx-community/Qwen3-0.6B-ONNX",
             {
                 dtype: "q4f16",
-                device: "wasm",
+                device: "webgpu",
                 progress_callback: (progress) => {
                     if (progress.status === 'progress') {
                         const percent = Math.round((progress.loaded / progress.total) * 100);
@@ -133,7 +146,7 @@ async function initializeModel() {
     } catch (error) {
         console.error('Error initializing model:', error);
         updateStatus('error', 'Failed to load model. Please refresh the page.');
-        addMessage('assistant', `Error: ${error.message}. Please refresh the page to try again.`);
+        // addMessage('assistant', `Error: ${error.message}. Please refresh the page to try again.`);
     }
 }
 
