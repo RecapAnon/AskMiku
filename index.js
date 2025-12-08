@@ -152,7 +152,7 @@ async function initializeModel() {
 
         generator = await pipeline(
             "text-generation",
-            "onnx-community/Qwen3-0.6B-ONNX",
+            "onnx-community/Qwen3-4B-ONNX",
             {
                 dtype: "q4f16",
                 device: "webgpu",
