@@ -210,7 +210,7 @@ class EntityDB {
   }
 
   // Query vectors by cosine similarity (using a text input that will be converted into embeddings)
-  async query(queryText, { limit = 10 } = {}) {
+  async query(queryText, { limit = 10, batchSize = 1000 } = {}) {
     try {
       // Get embeddings for the query text
       const queryVector = await getEmbeddingFromText(queryText, this.model);
@@ -218,16 +218,40 @@ class EntityDB {
       const db = await this.dbPromise;
       const transaction = db.transaction("vectors", "readonly");
       const store = transaction.objectStore("vectors");
-      const vectors = await store.getAll(); // Retrieve all vectors
 
-      // Calculate cosine similarity for each vector and sort by similarity
-      const similarities = vectors.map((entry) => {
-        const similarity = cosineSimilarity(queryVector, entry.vector);
-        return { ...entry, similarity };
-      });
+      let allSimilarities = [];
+      let range = null;
 
-      similarities.sort((a, b) => b.similarity - a.similarity); // Sort by similarity (descending)
-      return similarities.slice(0, limit); // Return the top N results based on limit
+      // Read vectors in batches and calculate similarities
+      while (true) {
+        const keys = await store.getAllKeys(range, batchSize);
+        const vectors = await store.getAll(range, batchSize);
+        
+        if (vectors && vectors.length > 0) {
+          // Calculate cosine similarity for each vector in this batch
+          const batchSimilarities = vectors.map((entry, index) => ({
+            ...entry,
+            similarity: cosineSimilarity(queryVector, entry.vector),
+          }));
+
+          allSimilarities.push(...batchSimilarities);
+
+          // Continue to next batch if we got a full batch
+          if (vectors.length === batchSize) {
+            range = IDBKeyRange.lowerBound(keys.at(-1), true);
+          } else {
+            // Last batch reached
+            break;
+          }
+        } else {
+          // No more vectors
+          break;
+        }
+      }
+
+      // Sort by similarity (descending) and return top N results
+      allSimilarities.sort((a, b) => b.similarity - a.similarity);
+      return allSimilarities.slice(0, limit);
     } catch (error) {
       throw new Error(`Error querying vectors: ${error}`);
     }
