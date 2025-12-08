@@ -32,36 +32,6 @@ async function getNativeDB() {
         request.onerror = () => reject(request.error);
     });
 }
-/**
- * Import database data from a JSON string
- * @param {string} jsonString - JSON string containing database data
- * @returns {Promise<boolean>} True if successful
- */
-async function importDatabaseFromString(jsonString) {
-    if (!vectorDB) {
-        console.warn('VectorDB not initialized. Cannot import.');
-        return false;
-    }
-
-    try {
-        const nativeDB = await getNativeDB();
-        
-        return new Promise((resolve, reject) => {
-            importFromJsonString(nativeDB, jsonString, (err) => {
-                if (err) {
-                    console.error('Error importing database:', err);
-                    reject(err);
-                } else {
-                    console.log('Database imported successfully');
-                    resolve(true);
-                }
-            });
-        });
-    } catch (error) {
-        console.error('Error importing database:', error);
-        return false;
-    }
-}
 
 async function loadLargeTextFile(url) {
     const response = await fetch(url);
@@ -75,7 +45,6 @@ async function loadLargeTextFile(url) {
         chunks.push(value);
     }
     const fullBuffer = new Uint8Array(chunks.reduce((total, chunk) => total + chunk.length, 0));
-    console.warn(chunks.length);
     let offset = 0;
     for (const chunk of chunks) {
         fullBuffer.set(chunk, offset);
@@ -83,7 +52,7 @@ async function loadLargeTextFile(url) {
     }
 
     const decoder = new TextDecoder('utf-8');
-    databaseFileContents = decoder.decode(fullBuffer);
+    return decoder.decode(fullBuffer);
 }
 
 async function initializeVectorDB() {
@@ -108,6 +77,8 @@ async function initializeVectorDB() {
             ];
             
             try {
+                const nativeDB = await getNativeDB();
+                
                 // Load all chunk files concurrently
                 const chunkPromises = chunkFiles.map(file => loadLargeTextFile(file));
                 const chunkContents = await Promise.all(chunkPromises);
@@ -116,7 +87,19 @@ async function initializeVectorDB() {
                 for (const contents of chunkContents) {
                     if (contents) {
                         console.log('Processing chunk, characters:', contents.length);
-                        await importDatabaseFromString(contents);
+                        
+                        // Use promise wrapper for importFromJsonString callback
+                        await new Promise((resolve, reject) => {
+                            importFromJsonString(nativeDB, contents, (err) => {
+                                if (err) {
+                                    console.error('Error importing database chunk:', err);
+                                    reject(err);
+                                } else {
+                                    console.log('Database chunk imported successfully');
+                                    resolve();
+                                }
+                            });
+                        });
                     }
                 }
                 
