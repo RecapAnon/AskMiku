@@ -89,28 +89,44 @@ async function loadLargeTextFile(url) {
 async function initializeVectorDB() {
     try {
         console.log('Initializing EntityDB for RAG...');
-
         vectorDB = new EntityDB({
             vectorPath: 'askmiku-memory',
             model: 'Xenova/all-MiniLM-L6-v2',
         });
-
         console.log('EntityDB initialized successfully');
-
-        // Only load from database.json if not already loaded.
-        const dbLoadedFromJson = localStorage.getItem('dbLoadedFromJson');
-        if (!dbLoadedFromJson) {
-            console.log('Checking for database.json...');
-            await loadLargeTextFile('data/database.json')
-                .then(async () => {
-                    console.log('Loaded characters:', databaseFileContents.length);
-                    await importDatabaseFromString(databaseFileContents);
-                    localStorage.setItem('dbLoadedFromJson', 'true');
-                    console.log('Database imported from database.json successfully (first time)');
-                })
-                .catch((err) => console.error(err));
+        
+        // Only load from chunked vectors if not already loaded
+        const dbLoadedFromChunks = localStorage.getItem('dbLoadedFromChunks');
+        if (!dbLoadedFromChunks) {
+            console.log('Checking for vector chunk files...');
+            
+            const chunkFiles = [
+                'data/vectors_chunk_0000.json',
+                'data/vectors_chunk_0001.json',
+                'data/vectors_chunk_0002.json',
+                'data/vectors_chunk_0003.json'
+            ];
+            
+            try {
+                // Load all chunk files concurrently
+                const chunkPromises = chunkFiles.map(file => loadLargeTextFile(file));
+                const chunkContents = await Promise.all(chunkPromises);
+                
+                // Import each chunk's contents
+                for (const contents of chunkContents) {
+                    if (contents) {
+                        console.log('Processing chunk, characters:', contents.length);
+                        await importDatabaseFromString(contents);
+                    }
+                }
+                
+                localStorage.setItem('dbLoadedFromChunks', 'true');
+                console.log('Database imported from chunked vectors successfully (first time)');
+            } catch (err) {
+                console.error('Error loading vector chunks:', err);
+            }
         } else {
-            console.log('Database already loaded from JSON, skipping import.');
+            console.log('Database already loaded from chunks, skipping import.');
         }
     } catch (error) {
         console.error('Error initializing EntityDB:', error);
