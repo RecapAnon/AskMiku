@@ -23,6 +23,7 @@ Hatsune Miku can only communicate through text, so she can't send images or vide
     { role: "assistant", content: `miku dayo~ *does a weird dance*` }
 ];
 let isGenerating = false;
+let databaseFileContents = '';
 
 async function getNativeDB() {
     return new Promise((resolve, reject) => {
@@ -62,13 +63,36 @@ async function importDatabaseFromString(jsonString) {
     }
 }
 
+async function loadLargeTextFile(url) {
+    const response = await fetch(url);
+    if (!response.ok || !response.body) throw new Error('Failed to fetch file.');
+
+    const reader = response.body.getReader();
+    const chunks = [];
+    while (true) {
+        const { value, done } = await reader.read();
+        if (done) break;
+        chunks.push(value);
+    }
+    const fullBuffer = new Uint8Array(chunks.reduce((total, chunk) => total + chunk.length, 0));
+    console.warn(chunks.length);
+    let offset = 0;
+    for (const chunk of chunks) {
+        fullBuffer.set(chunk, offset);
+        offset += chunk.length;
+    }
+
+    const decoder = new TextDecoder('utf-8');
+    databaseFileContents = decoder.decode(fullBuffer);
+}
+
 async function initializeVectorDB() {
     try {
         console.log('Initializing EntityDB for RAG...');
 
         vectorDB = new EntityDB({
-            vectorPath: "askmiku-memory",
-            model: "Xenova/all-MiniLM-L6-v2"
+            vectorPath: 'askmiku-memory',
+            model: 'Xenova/all-MiniLM-L6-v2',
         });
 
         console.log('EntityDB initialized successfully');
@@ -76,30 +100,20 @@ async function initializeVectorDB() {
         // Only load from database.json if not already loaded.
         const dbLoadedFromJson = localStorage.getItem('dbLoadedFromJson');
         if (!dbLoadedFromJson) {
-            try {
-                console.log('Checking for database.json...');
-                const response = await fetch('data/database.json');
-
-                if (response.ok) {
-                    console.log('Found database.json, importing...');
-                    const jsonString = await response.text();
-                    await importDatabaseFromString(jsonString);
+            console.log('Checking for database.json...');
+            await loadLargeTextFile('data/database.json')
+                .then(async () => {
+                    console.log('Loaded characters:', databaseFileContents.length);
+                    await importDatabaseFromString(databaseFileContents);
                     localStorage.setItem('dbLoadedFromJson', 'true');
                     console.log('Database imported from database.json successfully (first time)');
-                    return true; // Signal that we loaded from export
-                }
-            } catch (error) {
-                console.log('No database.json found or failed to load, will use dummy data');
-            }
+                })
+                .catch((err) => console.error(err));
         } else {
             console.log('Database already loaded from JSON, skipping import.');
         }
-
-        return false; // Signal that we need to load dummy data
     } catch (error) {
         console.error('Error initializing EntityDB:', error);
-        // Non-fatal - RAG features will be unavailable but chatbot still works
-        return false;
     }
 }
 
