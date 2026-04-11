@@ -1,5 +1,10 @@
 import { EntityDB } from "./entity-db.js";
-import { pipeline, TextStreamer } from "https://cdn.jsdelivr.net/npm/@huggingface/transformers@3.7.6/dist/transformers.min.js";
+import {
+  AutoTokenizer,
+  AutoModelForCausalLM,
+  TextStreamer,
+  InterruptableStoppingCriteria
+} from "https://cdn.jsdelivr.net/npm/@huggingface/transformers@3.7.6/dist/transformers.min.js";
 
 // DOM Elements
 const chatContainer = document.getElementById('chatContainer');
@@ -9,7 +14,35 @@ const statusIndicator = document.getElementById('statusIndicator');
 const statusText = document.getElementById('statusText');
 
 // State
-let generator = null;
+class TextGenerationPipeline {
+  static model = null;
+  static tokenizer = null;
+
+  static async getInstance(
+    progress_callback = null,
+    model_id = "onnx-community/Qwen3-4B-ONNX",
+  ) {
+    if (this.tokenizer && this.model) {
+      return [this.tokenizer, this.model];
+    }
+
+    this.tokenizer = await AutoTokenizer.from_pretrained(model_id, {
+      progress_callback,
+    });
+
+    this.model = await AutoModelForCausalLM.from_pretrained(model_id, {
+      dtype: "q4f16",
+      device: "webgpu",
+      use_external_data_format: true,
+      progress_callback,
+    });
+
+    return [this.tokenizer, this.model];
+  }
+}
+
+const stopping_criteria = new InterruptableStoppingCriteria();
+let past_key_values_cache = null;
 let vectorDB = null;
 let conversationHistory = [
     { role: "system", content: `Hatsune Miku = { virtual idol, vocaloid, 16, teal green twintails, likes leek, robotic voice, cute idol waifu, *crazy insane aaaAAAAAAAA*, makes no sense, beyond human comprehension, messes with {{user}}, coding genius, lowercase arbiter }
@@ -133,19 +166,14 @@ async function initializeModel() {
     try {
         updateStatus('loading', 'Loading Qwen3 model... This may take a minute on first load.');
 
-        generator = await pipeline(
-            "text-generation",
-            "onnx-community/Qwen3-4B-ONNX",
-            {
-                dtype: "q4f16",
-                device: "webgpu",
-                progress_callback: (progress) => {
-                    if (progress.status === 'progress') {
-                        const percent = Math.round((progress.loaded / progress.total) * 100);
-                        updateStatus('loading', `Loading model... ${percent}%`);
-                    }
+        await TextGenerationPipeline.getInstance(
+            (progress) => {
+                if (progress.status === 'progress') {
+                    const percent = Math.round((progress.loaded / progress.total) * 100);
+                    updateStatus('loading', `Loading model... ${percent}%`);
                 }
-            }
+            },
+            "onnx-community/Qwen3-4B-ONNX"
         );
 
         updateStatus('ready', 'Model ready! Initializing RAG database...');
@@ -238,7 +266,7 @@ function createStreamingMessageContainer() {
 }
 
 async function generateResponse(userMessage) {
-    if (isGenerating || !generator) return;
+    if (isGenerating || !TextGenerationPipeline.model) return;
     
     isGenerating = true;
     sendButton.disabled = true;
@@ -265,23 +293,58 @@ async function generateResponse(userMessage) {
             : userMessage;
         conversationHistory.push({ role: "user", content: enhancedMessage });
         const responseContainer = createStreamingMessageContainer();
-        const streamer = new TextStreamer(generator.tokenizer, {
+        const { tokenizer, model } = {
+            tokenizer: TextGenerationPipeline.tokenizer,
+            model: TextGenerationPipeline.model
+        };
+
+        const streamer = new TextStreamer(tokenizer, {
             skip_prompt: true,
-            skip_special_tokens: true
+            skip_special_tokens: true,
+            callback_function: (output) => {
+                if (output) {
+                    const preElement = responseContainer.querySelector('pre');
+                    if (preElement) {
+                        // Remove "Thinking" placeholder on first chunk
+                        if (preElement.innerHTML.includes('loading-dots')) {
+                            preElement.textContent = '';
+                        }
+                        preElement.textContent += output;
+                    }
+                }
+            }
         });
-        const output = await generator(conversationHistory, {
+
+        const inputs = tokenizer.apply_chat_template(conversationHistory, {
+            add_generation_prompt: true,
+            return_dict: true,
+            enable_thinking: false
+        });
+
+        const { past_key_values, sequences } = await model.generate({
+            ...inputs,
+            past_key_values: past_key_values_cache,
             max_new_tokens: 512,
             do_sample: false,
-            streamer: streamer
+            stopping_criteria,
+            return_dict_in_generate: true,
+            streamer,
         });
-        const generatedText = output[0].generated_text.at(-1).content;
-        const cleanText = generatedText.replace(/<think>[\s\S]*?<\/think>/g, '').trim();
-        conversationHistory.push({ role: "assistant", content: cleanText });
+
+        past_key_values_cache = past_key_values;
+
+        const decoded = tokenizer.batch_decode(sequences, {
+            skip_special_tokens: true,
+        });
+
+        const generatedText = decoded[0].trim();
+        conversationHistory.push({ role: "assistant", content: generatedText });
+        
         const preElement = responseContainer.querySelector('pre');
         if (preElement) {
-            preElement.textContent = cleanText || "I apologize, but I couldn't generate a response. Please try again.";
+            preElement.textContent = generatedText || "I apologize, but I couldn't generate a response. Please try again.";
         } else {
-            responseContainer.textContent = cleanText || "I apologize, but I couldn't generate a response. Please try again.";
+            responseContainer.textContent = generatedText || "I apologize, but I couldn't generate a response. Please try again.";
         }
         
     } catch (error) {
