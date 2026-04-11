@@ -170,7 +170,6 @@ async function initializeModel() {
                     updateStatus('loading', `Loading model... ${percent}%`);
                 }
             },
-            "onnx-community/Qwen3-4B-ONNX"
         );
 
         updateStatus('ready', 'Model ready! Initializing RAG database...');
