@@ -335,6 +335,11 @@ async function generateResponse(userMessage) {
             { skip_special_tokens: true },
         )[0].trim();
 
+        const lastUserMsgIndex = conversationHistory.findLastIndex(msg => msg.role === 'user');
+        if (lastUserMsgIndex !== -1) {
+            conversationHistory[lastUserMsgIndex].content = userMessage;
+        }
+
         conversationHistory.push({ role: "assistant", content: generatedText });
         
         const preElement = responseContainer.querySelector('pre');
