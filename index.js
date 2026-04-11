@@ -33,7 +33,6 @@ class TextGenerationPipeline {
     this.model = await AutoModelForCausalLM.from_pretrained(model_id, {
       dtype: "q4f16",
       device: "webgpu",
-      use_external_data_format: true,
       progress_callback,
     });
 
@@ -333,11 +332,11 @@ async function generateResponse(userMessage) {
 
         past_key_values_cache = past_key_values;
 
-        const decoded = tokenizer.batch_decode(sequences, {
-            skip_special_tokens: true,
-        });
+        const generatedText = tokenizer.batch_decode(
+            sequences.slice(null, [inputs.input_ids.dims[1], null]),
+            { skip_special_tokens: true },
+        )[0].trim();
 
-        const generatedText = decoded[0].trim();
         conversationHistory.push({ role: "assistant", content: generatedText });
         
         const preElement = responseContainer.querySelector('pre');
