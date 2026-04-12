@@ -313,23 +313,27 @@ async function generateResponse(userMessage) {
 
         const prompt = processor.apply_chat_template(conversationHistory, {
             add_generation_prompt: true,
-            enable_thinking: false,
+            return_dict: true,
+            enable_thinking: false
         });
 
         const inputs = await processor(prompt, null, null, {
             add_special_tokens: false,
         });
 
-        const outputs = await model.generate({
+        const { past_key_values, sequences } = await model.generate({
             ...inputs,
+            past_key_values: past_key_values_cache,
             max_new_tokens: 512,
             do_sample: false,
             stopping_criteria,
+            return_dict_in_generate: true,
             streamer,
         });
 
+        past_key_values_cache = past_key_values;
         const generatedText = processor.batch_decode(
-            outputs.slice(null, [inputs.input_ids.dims.at(-1), null]),
+            sequences.slice(null, [inputs.input_ids.dims.at(-1), null]),
             { skip_special_tokens: true },
         )[0].trim();
 
