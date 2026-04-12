@@ -4,7 +4,7 @@ import {
   Gemma4ForConditionalGeneration,
   TextStreamer,
   InterruptableStoppingCriteria
-} from "https://cdn.jsdelivr.net/npm/@huggingface/transformers@4.0.1/dist/transformers.min.js";
+} from 'https://cdn.jsdelivr.net/npm/@huggingface/transformers@4.0.1';
 
 // DOM Elements
 const chatContainer = document.getElementById('chatContainer');

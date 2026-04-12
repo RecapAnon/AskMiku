@@ -1,5 +1,5 @@
 import { openDB } from "https://cdn.jsdelivr.net/npm/idb/+esm";
-import { pipeline, env } from "https://cdn.jsdelivr.net/npm/@huggingface/transformers@4.0.1/dist/transformers.min.js";
+import { pipeline, env } from 'https://cdn.jsdelivr.net/npm/@huggingface/transformers@4.0.1';
 
 // Specify a custom location for models (defaults to '/models/').
 env.localModelPath = "/huggingface";
