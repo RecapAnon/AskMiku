@@ -20,7 +20,7 @@ class TextGenerationPipeline {
 
   static async getInstance(
     progress_callback = null,
-    model_id = "onnx-community/Qwen3-4B-ONNX",
+    model_id = "onnx-community/gemma-4-E2B-it-ONNX",
   ) {
     if (this.tokenizer && this.model) {
       return [this.tokenizer, this.model];
