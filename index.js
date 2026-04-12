@@ -23,20 +23,17 @@ class TextGenerationPipeline {
     model_id = "onnx-community/gemma-4-E2B-it-ONNX",
   ) {
     if (this.processor && this.model) {
-      return [this.processor, this.model];
+      return;
     }
 
-    this.processor = await AutoProcessor.from_pretrained(model_id, {
-      progress_callback,
-    });
-
-    this.model = await Gemma4ForConditionalGeneration.from_pretrained(model_id, {
-      dtype: "q4f16",
-      device: "webgpu",
-      progress_callback,
-    });
-
-    return [this.processor, this.model];
+    [this.model, this.processor] = await Promise.all([
+      Gemma4ForConditionalGeneration.from_pretrained(model_id, {
+        dtype: "q4f16",
+        device: "webgpu",
+        progress_callback,
+      }),
+      AutoProcessor.from_pretrained(model_id),
+    ]);
   }
 }
 
