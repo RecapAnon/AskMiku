@@ -316,7 +316,7 @@ async function generateResponse(userMessage) {
             enable_thinking: false,
         });
 
-        const inputs = await processor(prompt, {
+        const inputs = await processor(prompt, null, null, {
             add_special_tokens: false,
         });
 
