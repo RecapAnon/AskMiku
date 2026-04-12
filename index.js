@@ -1,7 +1,7 @@
 import { EntityDB } from "./entity-db.js";
 import {
-  AutoTokenizer,
-  AutoModelForCausalLM,
+  AutoProcessor,
+  Gemma4ForConditionalGeneration,
   TextStreamer,
   InterruptableStoppingCriteria
 } from "https://cdn.jsdelivr.net/npm/@huggingface/transformers@4.0.1/dist/transformers.min.js";
@@ -16,27 +16,27 @@ const statusText = document.getElementById('statusText');
 // State
 class TextGenerationPipeline {
   static model = null;
-  static tokenizer = null;
+  static processor = null;
 
   static async getInstance(
     progress_callback = null,
     model_id = "onnx-community/gemma-4-E2B-it-ONNX",
   ) {
-    if (this.tokenizer && this.model) {
-      return [this.tokenizer, this.model];
+    if (this.processor && this.model) {
+      return [this.processor, this.model];
     }
 
-    this.tokenizer = await AutoTokenizer.from_pretrained(model_id, {
+    this.processor = await AutoProcessor.from_pretrained(model_id, {
       progress_callback,
     });
 
-    this.model = await AutoModelForCausalLM.from_pretrained(model_id, {
+    this.model = await Gemma4ForConditionalGeneration.from_pretrained(model_id, {
       dtype: "q4f16",
       device: "webgpu",
       progress_callback,
     });
 
-    return [this.tokenizer, this.model];
+    return [this.processor, this.model];
   }
 }
 
@@ -161,7 +161,7 @@ async function initializeModel() {
     }
 
     try {
-        updateStatus('loading', 'Loading Qwen3 model... This may take a minute on first load.');
+        updateStatus('loading', 'Loading Gemma 4 model... This may take a minute on first load.');
 
         await TextGenerationPipeline.getInstance(
             (progress) => {
@@ -289,12 +289,12 @@ async function generateResponse(userMessage) {
             : userMessage;
         conversationHistory.push({ role: "user", content: enhancedMessage });
         const responseContainer = createStreamingMessageContainer();
-        const { tokenizer, model } = {
-            tokenizer: TextGenerationPipeline.tokenizer,
+        const { processor, model } = {
+            processor: TextGenerationPipeline.processor,
             model: TextGenerationPipeline.model
         };
 
-        const streamer = new TextStreamer(tokenizer, {
+        const streamer = new TextStreamer(processor.tokenizer, {
             skip_prompt: true,
             skip_special_tokens: true,
             callback_function: (output) => {
@@ -311,26 +311,25 @@ async function generateResponse(userMessage) {
             }
         });
 
-        const inputs = tokenizer.apply_chat_template(conversationHistory, {
+        const prompt = processor.apply_chat_template(conversationHistory, {
             add_generation_prompt: true,
-            return_dict: true,
-            enable_thinking: false
+            enable_thinking: false,
         });
 
-        const { past_key_values, sequences } = await model.generate({
+        const inputs = await processor(prompt, {
+            add_special_tokens: false,
+        });
+
+        const outputs = await model.generate({
             ...inputs,
-            past_key_values: past_key_values_cache,
             max_new_tokens: 512,
             do_sample: false,
             stopping_criteria,
-            return_dict_in_generate: true,
             streamer,
         });
 
-        past_key_values_cache = past_key_values;
-
-        const generatedText = tokenizer.batch_decode(
-            sequences.slice(null, [inputs.input_ids.dims[1], null]),
+        const generatedText = processor.batch_decode(
+            outputs.slice(null, [inputs.input_ids.dims.at(-1), null]),
             { skip_special_tokens: true },
         )[0].trim();
 
