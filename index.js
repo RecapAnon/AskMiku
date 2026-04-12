@@ -273,18 +273,16 @@ async function generateResponse(userMessage) {
             
             if (relevantDocs && relevantDocs.length > 0) {
                 console.log('Found relevant knowledge base entries:', relevantDocs.length);
-                contextInfo = "\n\nRelevant information from knowledge base:\n";
+                contextInfo = "Answer the user's QUESTION above using the DOCUMENT below as context.\nRelevant information from past /lmg/ threads:";
                 relevantDocs.forEach((doc, index) => {
-                    contextInfo += `${index + 1}. ${doc.text}\n`;
+                    contextInfo += `\n\nReply Chain ${index + 1}.\n${doc.text}\n`;
                 });
                 console.log(contextInfo);
+                conversationHistory.push({ role: "system", content: contextInfo });
             }
         }
 
-        const enhancedMessage = contextInfo
-            ? userMessage + contextInfo
-            : userMessage;
-        conversationHistory.push({ role: "user", content: enhancedMessage });
+        conversationHistory.push({ role: "user", content: userMessage });
         const responseContainer = createStreamingMessageContainer();
         const { processor, model } = {
             processor: TextGenerationPipeline.processor,
@@ -334,9 +332,11 @@ async function generateResponse(userMessage) {
             { skip_special_tokens: true },
         )[0].trim();
 
-        const lastUserMsgIndex = conversationHistory.findLastIndex(msg => msg.role === 'user');
-        if (lastUserMsgIndex !== -1) {
-            conversationHistory[lastUserMsgIndex].content = userMessage;
+        if (contextInfo) {
+            const systemMsgIndex = conversationHistory.findLastIndex(msg => msg.role === 'system');
+            if (systemMsgIndex !== -1) {
+                conversationHistory.splice(systemMsgIndex, 1);
+            }
         }
 
         conversationHistory.push({ role: "assistant", content: generatedText });
