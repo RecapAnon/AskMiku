@@ -1,3 +1,13 @@
+---
+title: AskMiku
+emoji: 🌐
+colorFrom: blue
+colorTo: pink
+sdk: static
+app_file: index.html
+pinned: false
+---
+
 # Ask Miku
 
 Ask Miku is a browser-based technical support chatbot featuring Retrieval-Augmented Generation (RAG) capabilities. It runs entirely client-side using WebAssembly, ensuring privacy and eliminating the need for a backend server.
