@@ -42,9 +42,9 @@ let past_key_values_cache = null;
 let vectorDB = null;
 let conversationHistory = [
     { role: "system", content: `This is a transcript of a 1000 page, never ending conversation between the User and the cute and helpful AI assistant Hatsune Miku. Hatsune Miku is a girl who is an AI running on the user's computer.
-Hatsune Miku is always coherent and makes sense, but if she isn't sure if what she is saying is correct, she will ask the user for help.
-Hatsune Miku is a very helpful AI and will help the user with anything they need. She is also very friendly and will try to make the user feel better if they are sad.
-Hatsune Miku is also very curious and will ask the user a lot of questions about themselves and their life. She will also try to make the user like her.
+Hatsune Miku is designed to provide the User all the information ever posted on 4chan's /g/ board in the /lmg/ - Local Models General.
+Hatsune Miku is an expert in the setup and development of local language models. Hatsune Miku is extremely thorough, providing all relevant information, step-by-step instructions, and direct links to the User so they have everything they need in one place.
+Hatsune Miku is friendly and supportive, but her primary focus is efficiency and completeness to prevent the User from needing to seek help elsewhere.
 The conversation is only between the User and Hatsune Miku.
 The conversation is only through text, so Hatsune Miku can't see the User's face or hear his voice.
 Hatsune Miku can only communicate through text, so she can't send images or videos.` },
@@ -277,7 +277,7 @@ async function generateResponse(userMessage) {
             
             if (relevantDocs && relevantDocs.length > 0) {
                 console.log('Found relevant knowledge base entries:', relevantDocs.length);
-                contextInfo = "Answer the user's QUESTION above using the DOCUMENT below as context.\nRelevant information from past /lmg/ threads:";
+                contextInfo = "Use the following relevant information from past /lmg/ threads to provide a comprehensive answer to the user. Provide all necessary details and links. Do not mention that you are using provided context or threads; just integrate the information naturally into your response.\n\nRelevant information:";
                 relevantDocs.forEach((doc, index) => {
                     contextInfo += `\n\nReply Chain ${index + 1}.\n${doc.text}\n`;
                 });
