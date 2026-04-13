@@ -176,6 +176,10 @@ async function initializeModel() {
         userInput.disabled = false;
         sendButton.disabled = false;
         userInput.focus();
+
+        const firstMessage = "Hello! I'm Hatsune Miku, your virtual assistant. How can I help you today?";
+        conversationHistory.push({ role: "assistant", content: firstMessage });
+        addMessage('assistant', firstMessage);
         
     } catch (error) {
         console.error('Error initializing model:', error);
