@@ -12,6 +12,8 @@ const userInput = document.getElementById('userInput');
 const sendButton = document.getElementById('sendButton');
 const statusIndicator = document.getElementById('statusIndicator');
 const statusText = document.getElementById('statusText');
+const loadModelButton = document.getElementById('loadModelButton');
+const loadButtonContainer = document.getElementById('loadButtonContainer');
 
 // State
 class TextGenerationPipeline {
@@ -191,6 +193,13 @@ async function initializeModel() {
 function updateStatus(state, text) {
     statusText.textContent = text;
     statusIndicator.className = `status-indicator ${state}`;
+    
+    if (state === 'loading' || state === 'ready' || state === 'error') {
+        if (loadModelButton) {
+            loadModelButton.disabled = true;
+            loadModelButton.textContent = 'Loading...';
+        }
+    }
 }
 
 function addMessage(role, content) {
@@ -380,4 +389,9 @@ userInput.addEventListener('keypress', (e) => {
     }
 });
 
-initializeModel();
+loadModelButton.addEventListener('click', () => {
+    if (loadButtonContainer) {
+        loadButtonContainer.style.display = 'none';
+    }
+    initializeModel();
+});

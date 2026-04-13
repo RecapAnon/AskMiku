@@ -270,9 +270,12 @@
     <div class="container">
         <div class="header">
             <h1>Ask Miku</h1>
-            <div class="status">
+            <div class="status" id="statusContainer">
                 <span class="status-indicator" id="statusIndicator"></span>
-                <span id="statusText">Initializing model...</span>
+                <span id="statusText">Ready to load</span>
+            </div>
+            <div id="loadButtonContainer" style="margin-top: 12px; text-align: center;">
+                <button class="send-button" id="loadModelButton">Load model</button>
             </div>
             <!-- <div style="margin-top: 12px;">
                 <a href="manage_database.html" style="color: #9ca3af; text-decoration: none; font-size: 13px; transition: color 0.2s;" onmouseover="this.style.color='#d1d5db'" onmouseout="this.style.color='#9ca3af'">
