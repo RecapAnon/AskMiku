@@ -332,7 +332,7 @@ async function generateResponse(userMessage) {
         const { past_key_values, sequences } = await model.generate({
             ...inputs,
             past_key_values: past_key_values_cache,
-            max_new_tokens: 512,
+            max_new_tokens: 2048,
             do_sample: false,
             stopping_criteria,
             return_dict_in_generate: true,
