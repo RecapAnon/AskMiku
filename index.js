@@ -16,6 +16,13 @@ const loadModelButton = document.getElementById('loadModelButton');
 const loadButtonContainer = document.getElementById('loadButtonContainer');
 
 // State
+const converter = new showdown.Converter({
+    tables: true,
+    strikethrough: true,
+    tasklists: true,
+    simpleLineBreaks: true,
+});
+
 class TextGenerationPipeline {
   static model = null;
   static processor = null;
@@ -224,9 +231,7 @@ function addMessage(role, content) {
     const contentDiv = document.createElement('div');
     contentDiv.className = 'message-content';
     
-    const preElement = document.createElement('pre');
-    preElement.textContent = content;
-    contentDiv.appendChild(preElement);
+    contentDiv.innerHTML = converter.makeHtml(content);
     
     messageDiv.appendChild(avatar);
     messageDiv.appendChild(contentDiv);
@@ -259,9 +264,7 @@ function createStreamingMessageContainer() {
     const contentDiv = document.createElement('div');
     contentDiv.className = 'message-content';
     
-    const preElement = document.createElement('pre');
-    preElement.innerHTML = '<span class="loading-dots">Thinking</span>';
-    contentDiv.appendChild(preElement);
+    contentDiv.innerHTML = '<span class="loading-dots">Thinking</span>';
     
     messageDiv.appendChild(avatar);
     messageDiv.appendChild(contentDiv);
@@ -308,14 +311,19 @@ async function generateResponse(userMessage) {
             skip_special_tokens: true,
             callback_function: (output) => {
                 if (output) {
-                    const preElement = responseContainer.querySelector('pre');
-                    if (preElement) {
-                        // Remove "Thinking" placeholder on first chunk
-                        if (preElement.innerHTML.includes('loading-dots')) {
-                            preElement.textContent = '';
-                        }
-                        preElement.textContent += output;
+                    // We need to maintain the full text to re-render markdown
+                    // Since we don't have a state variable for the current streaming text,
+                    // we'll use a data attribute on the container.
+                    let currentText = responseContainer.getAttribute('data-text') || '';
+                    
+                    // Remove "Thinking" placeholder on first chunk
+                    if (currentText === '') {
+                        responseContainer.innerHTML = '';
                     }
+                    
+                    currentText += output;
+                    responseContainer.setAttribute('data-text', currentText);
+                    responseContainer.innerHTML = converter.makeHtml(currentText);
                 }
             }
         });
@@ -355,12 +363,9 @@ async function generateResponse(userMessage) {
 
         conversationHistory.push({ role: "assistant", content: generatedText });
         
-        const preElement = responseContainer.querySelector('pre');
-        if (preElement) {
-            preElement.textContent = generatedText || "I apologize, but I couldn't generate a response. Please try again.";
-        } else {
-            responseContainer.textContent = generatedText || "I apologize, but I couldn't generate a response. Please try again.";
-        }
+        const finalText = generatedText || "I apologize, but I couldn't generate a response. Please try again.";
+        responseContainer.innerHTML = converter.makeHtml(finalText);
+        responseContainer.setAttribute('data-text', finalText);
         
     } catch (error) {
         console.error('Error generating response:', error);

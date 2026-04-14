@@ -169,14 +169,64 @@
             border-left: 3px solid #39C6C6;
         }
 
+        .message-content {
+            font-size: 15px;
+        }
+
+        .message-content p {
+            margin-bottom: 12px;
+        }
+
+        .message-content p:last-child {
+            margin-bottom: 0;
+        }
+
+        .message-content code {
+            background: rgba(0, 0, 0, 0.05);
+            padding: 2px 4px;
+            border-radius: 4px;
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 0.9em;
+        }
+
         .message-content pre {
-            margin: 0;
-            font-family: inherit;
-            font-size: inherit;
-            line-height: inherit;
-            color: inherit;
-            white-space: pre-wrap;
-            word-wrap: break-word;
+            background: #f3f4f6;
+            padding: 12px;
+            border-radius: 8px;
+            overflow-x: auto;
+            margin: 12px 0;
+            border: 1px solid #e5e7eb;
+        }
+
+        .message-content pre code {
+            background: transparent;
+            padding: 0;
+            font-family: 'Courier New', Courier, monospace;
+        }
+
+        .message-content ul, .message-content ol {
+            margin-left: 20px;
+            margin-bottom: 12px;
+        }
+
+        .message-content li {
+            margin-bottom: 4px;
+        }
+
+        .message-content table {
+            border-collapse: collapse;
+            width: 100%;
+            margin-bottom: 12px;
+        }
+
+        .message-content th, .message-content td {
+            border: 1px solid #e5e7eb;
+            padding: 8px;
+            text-align: left;
+        }
+
+        .message-content th {
+            background: #f3f4f6;
         }
 
         .input-container {
@@ -300,6 +350,7 @@
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/indexeddb-export-import@2.1.5/index.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/showdown@2.1.0/dist/showdown.min.js"></script>
     <script type="module" src="index.js"></script>
 </body>
 </html>
