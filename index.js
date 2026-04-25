@@ -264,7 +264,6 @@ async function generateResponse(userMessage) {
             }
         }
 
-        conversationHistory.push({ role: "user", content: userMessage });
         const responseContainer = const contentDiv = addMessage('assistant', '');
         responseContainer.innerHTML = '<span class="loading-dots">Thinking</span>';
         const { processor, model } = {
@@ -348,6 +347,7 @@ async function handleSendMessage() {
     const message = userInput.value.trim();
     if (!message || isGenerating) return;
     addMessage('user', message);
+    conversationHistory.push({ role: "user", content: userMessage });
     userInput.value = '';
     await generateResponse(message);
 }
