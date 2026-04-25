@@ -217,7 +217,6 @@ function addMessage(role, content) {
     const avatar = document.createElement('div');
     avatar.className = 'message-avatar';
     
-    // Create image element for avatar
     const avatarImg = document.createElement('img');
     avatarImg.src = role === 'user' ? 'https://files.catbox.moe/m5qftn.png' : 'https://files.catbox.moe/cbclyf.png';
     avatarImg.alt = role === 'user' ? 'User' : 'Assistant';
@@ -225,46 +224,12 @@ function addMessage(role, content) {
     avatarImg.style.height = '100%';
     avatarImg.style.borderRadius = '50%';
     avatarImg.style.objectFit = 'cover';
-    
     avatar.appendChild(avatarImg);
     
     const contentDiv = document.createElement('div');
     contentDiv.className = 'message-content';
     
     contentDiv.innerHTML = converter.makeHtml(content);
-    
-    messageDiv.appendChild(avatar);
-    messageDiv.appendChild(contentDiv);
-    chatContainer.appendChild(messageDiv);
-    
-    // Scroll to bottom
-    chatContainer.scrollTop = chatContainer.scrollHeight;
-    
-    return contentDiv;
-}
-
-function createStreamingMessageContainer() {
-    const messageDiv = document.createElement('div');
-    messageDiv.className = 'message assistant';
-    
-    const avatar = document.createElement('div');
-    avatar.className = 'message-avatar';
-    
-    // Create image element for avatar
-    const avatarImg = document.createElement('img');
-    avatarImg.src = 'https://files.catbox.moe/cbclyf.png';
-    avatarImg.alt = 'Assistant';
-    avatarImg.style.width = '100%';
-    avatarImg.style.height = '100%';
-    avatarImg.style.borderRadius = '50%';
-    avatarImg.style.objectFit = 'cover';
-    
-    avatar.appendChild(avatarImg);
-    
-    const contentDiv = document.createElement('div');
-    contentDiv.className = 'message-content';
-    
-    contentDiv.innerHTML = '<span class="loading-dots">Thinking</span>';
     
     messageDiv.appendChild(avatar);
     messageDiv.appendChild(contentDiv);
@@ -300,7 +265,8 @@ async function generateResponse(userMessage) {
         }
 
         conversationHistory.push({ role: "user", content: userMessage });
-        const responseContainer = createStreamingMessageContainer();
+        const responseContainer = const contentDiv = addMessage('assistant', '');
+        responseContainer.innerHTML = '<span class="loading-dots">Thinking</span>';
         const { processor, model } = {
             processor: TextGenerationPipeline.processor,
             model: TextGenerationPipeline.model
