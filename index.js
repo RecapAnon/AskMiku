@@ -260,7 +260,7 @@ async function generateResponse(userMessage) {
             }
         }
 
-        const responseContainer = const contentDiv = addMessage('assistant', '');
+        const responseContainer = addMessage('assistant', '');
         responseContainer.innerHTML = '<span class="loading-dots">Thinking</span>';
         const { processor, model } = {
             processor: TextGenerationPipeline.processor,
