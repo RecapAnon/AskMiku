@@ -341,7 +341,7 @@ async function handleSendMessage() {
     const message = userInput.value.trim();
     if (!message || isGenerating) return;
     addMessage('user', message);
-    conversationHistory.push({ role: "user", content: userMessage });
+    conversationHistory.push({ role: "user", content: message });
     userInput.value = '';
     await generateResponse(message);
 }
