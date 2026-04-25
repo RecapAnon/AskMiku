@@ -97,7 +97,7 @@ async function initializeVectorDB() {
         console.log('Initializing EntityDB for RAG...');
         vectorDB = new EntityDB({
             vectorPath: 'askmiku-memory',
-            model: 'Xenova/all-MiniLM-L6-v2',
+            model: "onnx-community/harrier-oss-v1-0.6b-ONNX"
         });
         console.log('EntityDB initialized successfully');
         
