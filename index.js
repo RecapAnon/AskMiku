@@ -3,7 +3,6 @@ import {
   AutoProcessor,
   Gemma4ForConditionalGeneration,
   TextStreamer,
-  InterruptableStoppingCriteria
 } from 'https://cdn.jsdelivr.net/npm/@huggingface/transformers@4.0.1';
 
 // DOM Elements
@@ -46,7 +45,6 @@ class TextGenerationPipeline {
   }
 }
 
-const stopping_criteria = new InterruptableStoppingCriteria();
 let past_key_values_cache = null;
 let vectorDB = null;
 let conversationHistory = [
@@ -303,10 +301,8 @@ async function generateResponse(userMessage) {
 
         const { past_key_values, sequences } = await model.generate({
             ...inputs,
-            // past_key_values: past_key_values_cache,
             max_new_tokens: 2048,
             do_sample: false,
-            stopping_criteria,
             return_dict_in_generate: true,
             streamer,
         });
