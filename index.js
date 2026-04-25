@@ -109,8 +109,6 @@ async function initializeVectorDB() {
             const chunkFiles = [
                 'https://huggingface.co/datasets/RecapAnon/lmg-neo-lora-v0.3/resolve/main/embeddings/vectors_chunk_0000.json',
                 'https://huggingface.co/datasets/RecapAnon/lmg-neo-lora-v0.3/resolve/main/embeddings/vectors_chunk_0001.json',
-                'https://huggingface.co/datasets/RecapAnon/lmg-neo-lora-v0.3/resolve/main/embeddings/vectors_chunk_0002.json',
-                'https://huggingface.co/datasets/RecapAnon/lmg-neo-lora-v0.3/resolve/main/embeddings/vectors_chunk_0003.json'
             ];
             
             try {
